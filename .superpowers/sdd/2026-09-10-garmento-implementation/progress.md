@@ -32,3 +32,8 @@ Task 6+7: complete (commits e1c56ce, review clean)
 
 Task 8+9: complete (commits 344cb13, review clean)
   Ruling: supabase-kt v3 API change selectList→select, material-icons-core dep added
+
+Task 10+11: complete (commits, review clean)
+  Ruling: Fixed plan bug — observeCustomers() was returning dead MutableStateFlow, replaced with reactive flatMapLatest
+
+Task 12+13: complete (commits feb4952, review clean)
