@@ -65,15 +65,18 @@ private val DarkColorScheme = darkColorScheme(
 @Composable
 fun GarmentoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    darkModeEnabled: Boolean? = null,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val effectiveDarkTheme = darkModeEnabled ?: darkTheme
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (effectiveDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
+        effectiveDarkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
@@ -82,7 +85,7 @@ fun GarmentoTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !effectiveDarkTheme
         }
     }
 

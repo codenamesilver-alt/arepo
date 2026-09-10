@@ -10,6 +10,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.garmento.core.sync.SyncWorker
 import com.example.garmento.feature.reminders.ReminderWorker
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
@@ -30,6 +31,7 @@ class GarmentoApp : Application(), Configuration.Provider {
         super.onCreate()
         createNotificationChannel()
         scheduleReminderWorker()
+        scheduleSyncWorker()
     }
 
     private fun createNotificationChannel() {
@@ -60,6 +62,24 @@ class GarmentoApp : Application(), Configuration.Provider {
             "expiry_reminders",
             ExistingPeriodicWorkPolicy.KEEP,
             reminderWork
+        )
+    }
+
+    private fun scheduleSyncWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val syncWork = PeriodicWorkRequestBuilder<SyncWorker>(
+            15, TimeUnit.MINUTES
+        )
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "offline_sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            syncWork
         )
     }
 

@@ -1,8 +1,13 @@
 package com.example.garmento.feature.orders
 
+import android.app.Application
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.garmento.core.data.local.dao.PendingSyncDao
+import com.example.garmento.core.data.local.entity.PendingSyncEntity
 import com.example.garmento.core.domain.model.Order
 import com.example.garmento.core.domain.model.Subscription
 import com.example.garmento.feature.customers.CustomerRepository
@@ -13,6 +18,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import java.util.UUID
 import javax.inject.Inject
 
 data class PlaceOrderUiState(
@@ -47,6 +57,8 @@ class OrdersViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
     private val subscriptionRepository: SubscriptionRepository,
     private val customerRepository: CustomerRepository,
+    private val pendingSyncDao: PendingSyncDao,
+    private val application: Application,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -107,23 +119,49 @@ class OrdersViewModel @Inject constructor(
         viewModelScope.launch {
             _placeOrderState.update { it.copy(isSaving = true, error = null) }
             try {
-                orderRepository.placeOrder(sub, state.orderNumber, clothesCount)
-                val remainingAfter = sub.clothesQuota - (sub.clothesUsed + clothesCount)
-                _placeOrderState.update {
-                    it.copy(
-                        isSaving = false,
-                        success = true,
-                        showLowQuotaWarning = remainingAfter <= 3,
-                        lowQuotaRemaining = remainingAfter
+                if (!isNetworkAvailable()) {
+                    val orderPayload = buildJsonObject {
+                        put("subscription_id", JsonPrimitive(sub.id.toString()))
+                        put("order_number", JsonPrimitive(state.orderNumber))
+                        put("clothes_count", JsonPrimitive(clothesCount))
+                        put("clothes_from_quota", JsonPrimitive(minOf(clothesCount, sub.remainingClothes)))
+                        put("clothes_overage", JsonPrimitive(maxOf(clothesCount - sub.remainingClothes, 0)))
+                        put("is_voided", JsonPrimitive(false))
+                        put("grace_period", JsonPrimitive(false))
+                    }
+                    pendingSyncDao.insertPendingItem(
+                        PendingSyncEntity(
+                            id = UUID.randomUUID().toString(),
+                            table_name = "orders",
+                            payload_json = Json.encodeToString(orderPayload),
+                            created_at = java.time.LocalDateTime.now().toString(),
+                            synced = false
+                        )
                     )
-                }
-                if (remainingAfter > 3) {
+                    _placeOrderState.update {
+                        it.copy(
+                            isSaving = false,
+                            success = true,
+                            error = "Saved offline — will sync when connected"
+                        )
+                    }
+                    onSuccess()
+                } else {
+                    orderRepository.placeOrder(sub, state.orderNumber, clothesCount)
+                    _placeOrderState.update { it.copy(isSaving = false, success = true) }
                     onSuccess()
                 }
             } catch (e: Exception) {
                 _placeOrderState.update { it.copy(isSaving = false, error = e.message) }
             }
         }
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = application.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     fun consumeLowQuotaWarning() {

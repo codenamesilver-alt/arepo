@@ -1,11 +1,6 @@
 package com.example.garmento.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,6 +17,7 @@ import com.example.garmento.feature.plans.PlanEditScreen
 import com.example.garmento.feature.plans.PlansListScreen
 import com.example.garmento.feature.reminders.RemindersScreen
 import com.example.garmento.feature.reports.ReportsScreen
+import com.example.garmento.feature.settings.SettingsScreen
 
 @Composable
 fun NavGraph(
@@ -155,24 +151,14 @@ fun NavGraph(
         }
 
         composable(Screen.Settings.route) {
-            PlaceholderSettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
-    }
-}
-
-@Composable
-private fun PlaceholderSettingsScreen(onNavigateBack: () -> Unit) {
-    PlaceholderContent("Settings")
-}
-
-@Composable
-private fun PlaceholderContent(title: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "$title — coming soon")
     }
 }

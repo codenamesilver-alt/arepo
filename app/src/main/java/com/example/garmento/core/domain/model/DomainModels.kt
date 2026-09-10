@@ -54,8 +54,9 @@ data class Subscription(
     val clothesOverage: Int
         get() = maxOf(clothesUsed - clothesQuota, 0)
 
-    val isInGracePeriod: Boolean
-        get() = false // computed at runtime via settings
+    fun isInGracePeriod(gracePeriodDays: Int): Boolean =
+        isExpired && gracePeriodDays > 0 &&
+            LocalDate.now() in endDate..endDate.plusDays(gracePeriodDays.toLong())
 
     val statusBadge: String
         get() = when {
