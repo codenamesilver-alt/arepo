@@ -15,6 +15,9 @@ import com.example.garmento.feature.auth.LoginScreen
 import com.example.garmento.feature.customers.CustomerDetailScreen
 import com.example.garmento.feature.customers.CustomerListScreen
 import com.example.garmento.feature.customers.NewSubscriptionScreen
+import com.example.garmento.feature.dashboard.DashboardScreen
+import com.example.garmento.feature.orders.OrderEditScreen
+import com.example.garmento.feature.orders.PlaceOrderScreen
 import com.example.garmento.feature.plans.PlanEditScreen
 import com.example.garmento.feature.plans.PlansListScreen
 
@@ -38,7 +41,7 @@ fun NavGraph(
         }
 
         composable(Screen.Dashboard.route) {
-            PlaceholderDashboardScreen(
+            DashboardScreen(
                 onNavigateToReminders = {
                     navController.navigate(Screen.Reminders.route)
                 },
@@ -121,7 +124,7 @@ fun NavGraph(
                 navArgument("customerId") { type = NavType.StringType }
             )
         ) {
-            PlaceholderPlaceOrderScreen(
+            PlaceOrderScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -132,7 +135,7 @@ fun NavGraph(
                 navArgument("orderId") { type = NavType.StringType }
             )
         ) {
-            PlaceholderOrderEditScreen(
+            OrderEditScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -153,27 +156,6 @@ fun NavGraph(
             )
         }
     }
-}
-
-// Placeholders below replace feature screens in Tasks 8+. Signatures match the
-// contracts the real screens must expose, so swapping them in is a drop-in change.
-
-@Composable
-private fun PlaceholderDashboardScreen(
-    onNavigateToReminders: () -> Unit,
-    onNavigateToCustomers: () -> Unit
-) {
-    PlaceholderContent("Dashboard")
-}
-
-@Composable
-private fun PlaceholderPlaceOrderScreen(onNavigateBack: () -> Unit) {
-    PlaceholderContent("Place Order")
-}
-
-@Composable
-private fun PlaceholderOrderEditScreen(onNavigateBack: () -> Unit) {
-    PlaceholderContent("Order Edit")
 }
 
 @Composable
