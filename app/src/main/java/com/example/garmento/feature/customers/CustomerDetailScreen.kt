@@ -24,15 +24,23 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.graphics.Bitmap
 import com.example.garmento.core.domain.model.SubscriptionStatus
+import com.example.garmento.core.util.Constants
+import com.example.garmento.feature.customer_portal.QrCodeGenerator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,6 +153,43 @@ fun CustomerDetailScreen(
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text("No active subscription")
+                            }
+                        }
+                    }
+
+                    // Self-Service Portal QR
+                    var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+                    val qrGenerator = remember { QrCodeGenerator() }
+
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Self-Service Portal", style = MaterialTheme.typography.titleSmall)
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (qrBitmap != null) {
+                                Image(
+                                    bitmap = qrBitmap!!.asImageBitmap(),
+                                    contentDescription = "QR Code",
+                                    modifier = Modifier.height(200.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "Code: ${customer.publicCode}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Button(
+                                    onClick = {
+                                        val url = "${Constants.PORTAL_BASE_URL}${customer.publicCode}"
+                                        qrBitmap = qrGenerator.generateQrBitmap(url)
+                                    }
+                                ) {
+                                    Text("Generate QR Code")
+                                }
                             }
                         }
                     }

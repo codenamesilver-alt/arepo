@@ -23,5 +23,9 @@ sealed class Screen(val route: String) {
     }
     data object Reports : Screen("reports")
     data object Reminders : Screen("reminders")
+    data object Staff : Screen("staff")
     data object Settings : Screen("settings")
+    data object CustomerPortal : Screen("customer_portal/{publicCode}") {
+        fun createRoute(publicCode: String): String = "customer_portal/$publicCode"
+    }
 }

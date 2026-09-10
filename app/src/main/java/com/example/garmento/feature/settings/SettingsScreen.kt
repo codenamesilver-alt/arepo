@@ -40,6 +40,7 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToStaff: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -153,6 +154,23 @@ fun SettingsScreen(
                     Switch(
                         checked = uiState.isDarkMode,
                         onCheckedChange = viewModel::onDarkModeToggle
+                    )
+                }
+            }
+
+            // Staff Management
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNavigateToStaff,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Staff Management", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Manage staff roles and access",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }

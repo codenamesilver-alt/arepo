@@ -7,6 +7,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.garmento.feature.auth.LoginScreen
+import com.example.garmento.feature.auth.StaffListScreen
+import com.example.garmento.feature.customer_portal.CustomerPortalScreen
 import com.example.garmento.feature.customers.CustomerDetailScreen
 import com.example.garmento.feature.customers.CustomerListScreen
 import com.example.garmento.feature.customers.NewSubscriptionScreen
@@ -150,15 +152,34 @@ fun NavGraph(
             )
         }
 
+        composable(Screen.Staff.route) {
+            StaffListScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToStaff = {
+                    navController.navigate(Screen.Staff.route)
+                },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
             )
+        }
+
+        composable(
+            route = Screen.CustomerPortal.route,
+            arguments = listOf(
+                navArgument("publicCode") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val publicCode = backStackEntry.arguments?.getString("publicCode") ?: ""
+            CustomerPortalScreen(publicCode = publicCode)
         }
     }
 }
