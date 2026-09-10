@@ -12,6 +12,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.garmento.feature.auth.LoginScreen
+import com.example.garmento.feature.customers.CustomerDetailScreen
+import com.example.garmento.feature.customers.CustomerListScreen
+import com.example.garmento.feature.customers.NewSubscriptionScreen
 import com.example.garmento.feature.plans.PlanEditScreen
 import com.example.garmento.feature.plans.PlansListScreen
 
@@ -74,7 +77,7 @@ fun NavGraph(
         }
 
         composable(Screen.CustomerList.route) {
-            PlaceholderCustomerListScreen(
+            CustomerListScreen(
                 onNavigateToDetail = { customerId ->
                     navController.navigate(Screen.CustomerDetail.createRoute(customerId))
                 }
@@ -87,7 +90,7 @@ fun NavGraph(
                 navArgument("customerId") { type = NavType.StringType }
             )
         ) {
-            PlaceholderCustomerDetailScreen(
+            CustomerDetailScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToNewSubscription = { customerId ->
                     navController.navigate(Screen.NewSubscription.createRoute(customerId))
@@ -107,7 +110,7 @@ fun NavGraph(
                 navArgument("customerId") { type = NavType.StringType }
             )
         ) {
-            PlaceholderNewSubscriptionScreen(
+            NewSubscriptionScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -161,26 +164,6 @@ private fun PlaceholderDashboardScreen(
     onNavigateToCustomers: () -> Unit
 ) {
     PlaceholderContent("Dashboard")
-}
-
-@Composable
-private fun PlaceholderCustomerListScreen(onNavigateToDetail: (String) -> Unit) {
-    PlaceholderContent("Customers")
-}
-
-@Composable
-private fun PlaceholderCustomerDetailScreen(
-    onNavigateBack: () -> Unit,
-    onNavigateToNewSubscription: (String) -> Unit,
-    onNavigateToPlaceOrder: (String) -> Unit,
-    onNavigateToOrderEdit: (String) -> Unit
-) {
-    PlaceholderContent("Customer Detail")
-}
-
-@Composable
-private fun PlaceholderNewSubscriptionScreen(onNavigateBack: () -> Unit) {
-    PlaceholderContent("New Subscription")
 }
 
 @Composable

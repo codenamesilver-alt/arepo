@@ -29,3 +29,6 @@ Task 4+5: complete (commits 0013068, review clean)
   Ruling: supabase-kt 3.1.2 renamed gotrue-kt to auth-kt — implementer fixed import
 
 Task 6+7: complete (commits e1c56ce, review clean)
+
+Task 8+9: complete (commits 344cb13, review clean)
+  Ruling: supabase-kt v3 API change selectList→select, material-icons-core dep added
