@@ -24,3 +24,8 @@ Task 1: complete (commits 079c42f, review clean)
   Minor (deferred): Missing trailing newlines, experimental Gradle property
 
 Task 2+3: complete (commits ffcd51c, review clean)
+
+Task 4+5: complete (commits 0013068, review clean)
+  Ruling: supabase-kt 3.1.2 renamed gotrue-kt to auth-kt — implementer fixed import
+
+Task 6+7: complete (commits e1c56ce, review clean)

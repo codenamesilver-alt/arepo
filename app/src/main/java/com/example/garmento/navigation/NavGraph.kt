@@ -11,6 +11,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.garmento.feature.auth.LoginScreen
+import com.example.garmento.feature.plans.PlanEditScreen
+import com.example.garmento.feature.plans.PlansListScreen
 
 @Composable
 fun NavGraph(
@@ -22,7 +25,7 @@ fun NavGraph(
         startDestination = startDestination
     ) {
         composable(Screen.Login.route) {
-            PlaceholderLoginScreen(
+            LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -43,7 +46,7 @@ fun NavGraph(
         }
 
         composable(Screen.PlansList.route) {
-            PlaceholderPlansListScreen(
+            PlansListScreen(
                 onNavigateToEdit = { planId ->
                     navController.navigate(Screen.PlanEdit.createRoute(planId))
                 },
@@ -64,7 +67,7 @@ fun NavGraph(
             )
         ) { backStackEntry ->
             val planId = backStackEntry.arguments?.getString("planId")
-            PlaceholderPlanEditScreen(
+            PlanEditScreen(
                 planId = planId,
                 onNavigateBack = { navController.popBackStack() }
             )
@@ -153,32 +156,11 @@ fun NavGraph(
 // contracts the real screens must expose, so swapping them in is a drop-in change.
 
 @Composable
-private fun PlaceholderLoginScreen(onLoginSuccess: () -> Unit) {
-    PlaceholderContent("Login")
-}
-
-@Composable
 private fun PlaceholderDashboardScreen(
     onNavigateToReminders: () -> Unit,
     onNavigateToCustomers: () -> Unit
 ) {
     PlaceholderContent("Dashboard")
-}
-
-@Composable
-private fun PlaceholderPlansListScreen(
-    onNavigateToEdit: (String) -> Unit,
-    onNavigateToCreate: () -> Unit
-) {
-    PlaceholderContent("Plans")
-}
-
-@Composable
-private fun PlaceholderPlanEditScreen(
-    planId: String?,
-    onNavigateBack: () -> Unit
-) {
-    PlaceholderContent("Plan Edit")
 }
 
 @Composable
