@@ -15,3 +15,12 @@
 | T17→T6 | T17 produces settings, T6 has theme placeholder | Clean: T17 adds dark mode toggle, T6 has base theme |
 
 Scan complete — no conflicts found.
+
+## Task Completions
+
+Task 1: complete (commits 079c42f, review clean)
+  Ruling: SDK 37 acceptable — AGP 9 adaptation, documented by implementer
+  Ruling: Service role key in BuildConfig acceptable for dev — plan-mandated, flagged by implementer
+  Minor (deferred): Missing trailing newlines, experimental Gradle property
+
+Task 2+3: complete (commits ffcd51c, review clean)
