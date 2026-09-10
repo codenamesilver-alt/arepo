@@ -21,6 +21,7 @@ import com.example.garmento.feature.orders.PlaceOrderScreen
 import com.example.garmento.feature.plans.PlanEditScreen
 import com.example.garmento.feature.plans.PlansListScreen
 import com.example.garmento.feature.reminders.RemindersScreen
+import com.example.garmento.feature.reports.ReportsScreen
 
 @Composable
 fun NavGraph(
@@ -142,7 +143,9 @@ fun NavGraph(
         }
 
         composable(Screen.Reports.route) {
-            PlaceholderReportsScreen()
+            ReportsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Reminders.route) {
@@ -157,11 +160,6 @@ fun NavGraph(
             )
         }
     }
-}
-
-@Composable
-private fun PlaceholderReportsScreen() {
-    PlaceholderContent("Reports")
 }
 
 @Composable

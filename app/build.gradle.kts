@@ -44,6 +44,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -110,6 +111,13 @@ dependencies {
 
     // ZXing QR
     implementation(libs.zxing.core)
+
+    // Apache POI (Excel export)
+    implementation(libs.poi) {
+        // log4j-api 2.x emits MethodHandle bytecode that D8 rejects on minSdk 24.
+        exclude(group = "org.apache.logging.log4j")
+    }
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // Testing
     testImplementation(libs.junit)

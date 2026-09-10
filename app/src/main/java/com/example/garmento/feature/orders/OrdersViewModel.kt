@@ -22,7 +22,9 @@ data class PlaceOrderUiState(
     val clothesCount: String = "",
     val isSaving: Boolean = false,
     val success: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val showLowQuotaWarning: Boolean = false,
+    val lowQuotaRemaining: Int = 0
 ) {
     val clothesCountInt: Int get() = clothesCount.toIntOrNull() ?: 0
     val remainingBefore: Int get() = subscription?.remainingClothes ?: 0
@@ -106,12 +108,26 @@ class OrdersViewModel @Inject constructor(
             _placeOrderState.update { it.copy(isSaving = true, error = null) }
             try {
                 orderRepository.placeOrder(sub, state.orderNumber, clothesCount)
-                _placeOrderState.update { it.copy(isSaving = false, success = true) }
-                onSuccess()
+                val remainingAfter = sub.clothesQuota - (sub.clothesUsed + clothesCount)
+                _placeOrderState.update {
+                    it.copy(
+                        isSaving = false,
+                        success = true,
+                        showLowQuotaWarning = remainingAfter <= 3,
+                        lowQuotaRemaining = remainingAfter
+                    )
+                }
+                if (remainingAfter > 3) {
+                    onSuccess()
+                }
             } catch (e: Exception) {
                 _placeOrderState.update { it.copy(isSaving = false, error = e.message) }
             }
         }
+    }
+
+    fun consumeLowQuotaWarning() {
+        _placeOrderState.update { it.copy(showLowQuotaWarning = false) }
     }
 
     private fun loadOrderForEdit(orderId: String) {

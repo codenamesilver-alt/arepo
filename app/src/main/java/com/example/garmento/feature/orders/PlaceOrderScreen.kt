@@ -23,10 +23,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,6 +45,16 @@ fun PlaceOrderScreen(
     viewModel: OrdersViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.placeOrderState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.showLowQuotaWarning) {
+        if (uiState.showLowQuotaWarning) {
+            snackbarHostState.showSnackbar(
+                "Low quota: only ${uiState.lowQuotaRemaining} clothes remaining on this subscription"
+            )
+            viewModel.consumeLowQuotaWarning()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -52,7 +66,8 @@ fun PlaceOrderScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -125,7 +140,7 @@ fun PlaceOrderScreen(
 
             Button(
                 onClick = { viewModel.placeOrder(onNavigateBack) },
-                enabled = !uiState.isSaving,
+                enabled = !uiState.isSaving && !uiState.success,
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 if (uiState.isSaving) {

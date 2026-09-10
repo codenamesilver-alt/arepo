@@ -26,6 +26,9 @@ interface SubscriptionDao {
     @Query("SELECT * FROM subscriptions WHERE status = 'active'")
     suspend fun getAllActiveSubscriptions(): List<SubscriptionEntity>
 
+    @Query("SELECT * FROM subscriptions ORDER BY created_at DESC")
+    suspend fun getAllSubscriptions(): List<SubscriptionEntity>
+
     @Query("SELECT COUNT(*) FROM subscriptions WHERE status = 'active'")
     suspend fun getActiveSubscriptionCount(): Int
 

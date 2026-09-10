@@ -23,6 +23,8 @@ kotlinxSerializationJson = "1.8.1"
 zxing = "3.5.4"
 lifecycleViewmodelCompose = "2.11.0"
 lifecycleRuntimeCompose = "2.11.0"
+poi = "3.17"
+desugarJdkLibs = "2.1.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -85,6 +87,12 @@ vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", ve
 
 # ZXing (QR)
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+
+# Apache POI (Excel export)
+poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
+
+# Core library desugaring (required for Apache POI's MethodHandle usage on API < 26)
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
