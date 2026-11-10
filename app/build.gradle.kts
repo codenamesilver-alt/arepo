@@ -24,8 +24,8 @@ android {
         applicationId = "com.example.garmento"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -34,8 +34,19 @@ android {
         buildConfigField("String", "SUPABASE_SERVICE_ROLE_KEY", "\"${localProperties.getProperty("SUPABASE_SERVICE_ROLE_KEY", "")}\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file(localProperties.getProperty("KEYSTORE_FILE", "default"))
+                .takeIf { it.exists() }
+            storePassword = localProperties.getProperty("KEYSTORE_PASSWORD", "")
+            keyAlias = localProperties.getProperty("KEYSTORE_ALIAS", "")
+            keyPassword = localProperties.getProperty("KEYSTORE_PASSWORD", "")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             optimization {
                 enable = false
             }
@@ -88,6 +99,9 @@ dependencies {
     implementation(libs.supabase.postgrest)
     implementation(libs.supabase.auth)
     implementation(libs.supabase.realtime)
+
+    // AndroidX Browser (Custom Tabs for Supabase Google OAuth)
+    implementation("androidx.browser:browser:1.8.0")
 
     // Ktor
     implementation(libs.ktor.client.core)
