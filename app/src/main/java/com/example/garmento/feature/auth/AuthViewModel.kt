@@ -33,22 +33,16 @@ class AuthViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(password = password, errorMessage = null)
     }
 
-    fun login() {
-        val state = _uiState.value
-        if (state.username.isBlank() || state.password.isBlank()) {
-            _uiState.value = state.copy(errorMessage = "Username and password are required")
-            return
-        }
-
+    fun signInWithGoogle() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val success = authRepository.login(state.username, state.password)
+            val success = authRepository.signInWithGoogle()
             if (success) {
                 _uiState.value = _uiState.value.copy(isLoading = false, loginSuccess = true)
             } else {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = "Invalid credentials"
+                    errorMessage = "Sign-in failed"
                 )
             }
         }

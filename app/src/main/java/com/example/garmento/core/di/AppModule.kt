@@ -39,7 +39,10 @@ object AppModule {
             supabaseUrl = com.example.garmento.BuildConfig.SUPABASE_URL,
             supabaseKey = com.example.garmento.BuildConfig.SUPABASE_ANON_KEY
         ) {
-            install(Auth)
+            install(Auth) {
+                scheme = "com.example.garmento"
+                host = "login-callback"
+            }
             install(Postgrest)
             install(Realtime)
             httpEngine = OkHttp.create()
@@ -53,7 +56,7 @@ object AppModule {
             context,
             GarmentoDatabase::class.java,
             Constants.DATABASE_NAME
-        ).build()
+        ).addMigrations(GarmentoDatabase.MIGRATION_1_2).build()
     }
 
     @Provides
