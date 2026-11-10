@@ -16,9 +16,6 @@ object Constants {
     val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
     val GRACE_PERIOD_KEY = intPreferencesKey("grace_period_days")
 
-    const val ADMIN_USERNAME = "admin"
-    const val ADMIN_PASSWORD = "admin"
-
     const val DATABASE_NAME = "garmento_db"
     const val DATASTORE_NAME = "garmento_settings"
 
