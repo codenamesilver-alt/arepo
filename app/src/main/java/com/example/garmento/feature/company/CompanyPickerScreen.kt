@@ -23,6 +23,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.example.garmento.core.domain.model.UserRole
 import com.example.garmento.core.util.UserSession
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,7 +43,8 @@ data class CompanyPickerUiState(
 
 @HiltViewModel
 class CompanyPickerViewModel @Inject constructor(
-    private val repository: CompanyRepository
+    private val repository: CompanyRepository,
+    private val dataStore: DataStore<Preferences>?
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CompanyPickerUiState())
@@ -66,6 +69,9 @@ class CompanyPickerViewModel @Inject constructor(
     fun select(company: Company, onSelected: (Company) -> Unit = {}) {
         val role = if (company.role == "owner") UserRole.ADMIN else UserRole.STAFF
         UserSession.setCompany(company.id, role)
+        dataStore?.let { ds ->
+            viewModelScope.launch { UserSession.save(ds) }
+        }
         onSelected(company)
     }
 }

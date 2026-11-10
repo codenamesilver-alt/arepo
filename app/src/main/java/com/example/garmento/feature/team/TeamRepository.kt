@@ -60,7 +60,7 @@ class TeamRepository @Inject constructor(
         return try {
             val rows = supabase.from("company_members")
                 .select {
-                    filter { eq("company_id", companyId) }
+                    filter { eq("company_id", companyId); eq("status", "active") }
                 }
                 .decodeList<SupabaseMember>()
             rows.map { m ->

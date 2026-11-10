@@ -1,5 +1,7 @@
 package com.example.garmento.feature.company
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.garmento.core.domain.model.UserRole
@@ -21,8 +23,11 @@ data class CompanyCreateUiState(
 
 @HiltViewModel
 class CompanyCreateViewModel @Inject constructor(
-    private val repository: CompanyRepository
+    private val repository: CompanyRepository,
+    private val dataStore: DataStore<Preferences>?
 ) : ViewModel() {
+
+    constructor(repository: CompanyRepository) : this(repository, null)
 
     private val _uiState = MutableStateFlow(CompanyCreateUiState())
     val uiState: StateFlow<CompanyCreateUiState> = _uiState.asStateFlow()
@@ -43,6 +48,7 @@ class CompanyCreateViewModel @Inject constructor(
                 val company = repository.createCompany(trimmed)
                 val role = if (company.role == "owner") UserRole.ADMIN else UserRole.STAFF
                 UserSession.setCompany(company.id, role)
+                dataStore?.let { UserSession.save(it) }
                 _uiState.update { it.copy(isLoading = false, success = true, name = company.name) }
                 onSuccess()
             } catch (e: Exception) {

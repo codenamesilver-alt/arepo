@@ -53,19 +53,15 @@ class CompanyRepositoryImpl @Inject constructor(
 
     override suspend fun getMyCompanies(): List<Company> {
         val userId = supabase.auth.currentUserOrNull()?.id ?: UserSession.userId ?: return emptyList()
-        return try {
-            val memberships = supabase.from("company_members")
-                .select(columns = Columns.raw("company_id, role, status, companies(id,name)")) {
-                    filter { eq("user_id", userId) }
-                }
-                .decodeList<SupabaseMembership>()
-            memberships.mapNotNull { m ->
-                val c = m.companies ?: return@mapNotNull null
-                if (m.status != "active") return@mapNotNull null
-                Company(id = c.id, name = c.name, role = m.role)
+        val memberships = supabase.from("company_members")
+            .select(columns = Columns.raw("company_id, role, status, companies(id,name)")) {
+                filter { eq("user_id", userId) }
             }
-        } catch (e: Exception) {
-            emptyList()
+            .decodeList<SupabaseMembership>()
+        return memberships.mapNotNull { m ->
+            val c = m.companies ?: return@mapNotNull null
+            if (m.status != "active") return@mapNotNull null
+            Company(id = c.id, name = c.name, role = m.role)
         }
     }
 

@@ -5,8 +5,8 @@ Read this before touching the database.
 
 ## Project
 
-- Project ref: `kfxldnebbqkwkzsxirny`
-- URL: `https://kfxldnebbqkwkzsxirny.supabase.co`
+- Project ref: `gjhrjzqbkjcvebqizgti`
+- URL: `https://gjhrjzqbkjcvebqizgti.supabase.co`
 - Supabase URL anon key and service role key live in `local.properties` (gitignored).
   The app shipsonly the anon key (via `BuildConfig`); the service role key is for SQL/dashboard/scripts.
 

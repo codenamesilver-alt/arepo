@@ -3,6 +3,8 @@ package com.example.garmento.core.sync
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -23,11 +25,14 @@ class SyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val pendingSyncDao: PendingSyncDao,
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val dataStore: DataStore<Preferences>
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
         if (!isNetworkAvailable()) return Result.retry()
+
+        runCatching { UserSession.load(dataStore) }
 
         val activeCompanyId = UserSession.currentCompanyId?.takeIf { it.isNotBlank() }
             ?: UserSession.companyId?.takeIf { it.isNotBlank() }
@@ -53,7 +58,8 @@ class SyncWorker @AssistedInject constructor(
                         "transactions" -> supabase.from("transactions").insert(payload)
                     }
                     pendingSyncDao.markSynced(item.id, rowCompanyId)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    android.util.Log.e("SyncWorker", "Failed to sync item ${item.id}", e)
                     // Continue with next item
                 }
             }

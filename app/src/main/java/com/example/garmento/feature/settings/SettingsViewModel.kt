@@ -1,5 +1,7 @@
 package com.example.garmento.feature.settings
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.garmento.core.domain.model.UserRole
@@ -29,32 +31,9 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository?,
     private val companyRepository: CompanyRepository?,
-    private val authRepository: AuthRepository?
+    private val authRepository: AuthRepository?,
+    private val dataStore: DataStore<Preferences>?
 ) : ViewModel() {
-
-    constructor(settingsRepository: SettingsRepository) : this(settingsRepository, null, null)
-    constructor(companyRepository: CompanyRepository) : this(null, companyRepository, null)
-    constructor(authRepository: AuthRepository) : this(null, null, authRepository)
-    constructor(settingsRepository: SettingsRepository, companyRepository: CompanyRepository) :
-        this(settingsRepository, companyRepository, null)
-    constructor(settingsRepository: SettingsRepository, authRepository: AuthRepository) :
-        this(settingsRepository, null, authRepository)
-    constructor(companyRepository: CompanyRepository, authRepository: AuthRepository) :
-        this(null, companyRepository, authRepository)
-    constructor(companyRepository: CompanyRepository, settingsRepository: SettingsRepository) :
-        this(settingsRepository, companyRepository, null)
-    constructor(authRepository: AuthRepository, settingsRepository: SettingsRepository) :
-        this(settingsRepository, null, authRepository)
-    constructor(authRepository: AuthRepository, companyRepository: CompanyRepository) :
-        this(null, companyRepository, authRepository)
-    constructor(companyRepository: CompanyRepository, authRepository: AuthRepository, settingsRepository: SettingsRepository) :
-        this(settingsRepository, companyRepository, authRepository)
-    constructor(companyRepository: CompanyRepository, settingsRepository: SettingsRepository, authRepository: AuthRepository) :
-        this(settingsRepository, companyRepository, authRepository)
-    constructor(authRepository: AuthRepository, companyRepository: CompanyRepository, settingsRepository: SettingsRepository) :
-        this(settingsRepository, companyRepository, authRepository)
-    constructor(authRepository: AuthRepository, settingsRepository: SettingsRepository, companyRepository: CompanyRepository) :
-        this(settingsRepository, companyRepository, authRepository)
 
     private val _uiState = MutableStateFlow(SettingsUiState(currentCompanyId = UserSession.companyId))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -108,6 +87,9 @@ class SettingsViewModel @Inject constructor(
         val company = _uiState.value.companies.firstOrNull { it.id == companyId }
         val role = if (company?.role == "owner") UserRole.ADMIN else UserRole.STAFF
         UserSession.setCompany(companyId, role)
+        dataStore?.let { ds ->
+            viewModelScope.launch { UserSession.save(ds) }
+        }
         _uiState.update { it.copy(currentCompanyId = companyId) }
         onSwitched()
     }

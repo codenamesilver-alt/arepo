@@ -2,8 +2,11 @@ package com.example.garmento.feature.invite
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.example.garmento.core.domain.model.UserRole
 import com.example.garmento.core.util.UserSession
+import com.example.garmento.feature.auth.AuthRepository
 import com.example.garmento.feature.company.CompanyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
@@ -27,7 +30,9 @@ data class InviteAcceptUiState(
 @HiltViewModel
 class InviteAcceptViewModel @Inject constructor(
     private val supabase: SupabaseClient,
-    private val companyRepository: CompanyRepository
+    private val companyRepository: CompanyRepository,
+    private val authRepository: AuthRepository?,
+    private val dataStore: DataStore<Preferences>?
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InviteAcceptUiState())
@@ -37,6 +42,13 @@ class InviteAcceptViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, success = false) }
             try {
+                if (authRepository?.currentSession() == null) {
+                    val signedIn = authRepository?.signInWithGoogle() ?: false
+                    if (!signedIn) {
+                        _uiState.update { it.copy(isLoading = false, error = "Please sign in to accept this invitation.") }
+                        return@launch
+                    }
+                }
                 val before = companyRepository.getMyCompanies().map { it.id }.toSet()
                 val result = supabase.postgrest.rpc(
                     function = "accept_invitation",
@@ -50,6 +62,7 @@ class InviteAcceptViewModel @Inject constructor(
                 if (joined != null) {
                     val role = if (joined.role == "owner") UserRole.ADMIN else UserRole.STAFF
                     UserSession.setCompany(joined.id, role)
+                    dataStore?.let { UserSession.save(it) }
                 }
                 _uiState.update {
                     it.copy(isLoading = false, success = true, companyName = joined?.name)

@@ -1,8 +1,11 @@
 package com.example.garmento.feature.auth
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +23,7 @@ fun SessionGateScreen(
     viewModel: SessionViewModel = hiltViewModel()
 ) {
     val destination by viewModel.destination.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(destination) {
         when (destination) {
@@ -32,6 +36,16 @@ fun SessionGateScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        if (error != null) {
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(error ?: "")
+                Button(onClick = { viewModel.refresh() }) { Text("Retry") }
+            }
+        } else {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
     }
 }
