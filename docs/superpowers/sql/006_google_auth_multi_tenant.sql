@@ -187,7 +187,7 @@ create policy "owner manage invitations" on public.invitations for all
 
 drop policy if exists "invitee read invitations" on public.invitations;
 create policy "invitee read invitations" on public.invitations for select
-  using (lower(email) = lower((select email from auth.users where id = auth.uid())));
+  using (lower(email) = lower(auth.jwt() ->> 'email'));
 
 -- ============================================================
 -- RPC: get_customer_portal (anon-safe, SECURITY DEFINER)
@@ -254,7 +254,7 @@ begin
   if v_user_id is null then
     raise exception 'not authenticated';
   end if;
-  select email into v_email from auth.users where id = v_user_id;
+  v_email := auth.jwt() ->> 'email';
   select * into v_inv from public.invitations where token = p_token;
   if not found then
     raise exception 'invalid invitation token';
