@@ -7,6 +7,7 @@ import com.example.garmento.core.data.local.dao.SubscriptionDao
 import com.example.garmento.core.data.local.dao.TransactionDao
 import com.example.garmento.core.data.local.entity.OrderEntity
 import com.example.garmento.core.data.local.entity.TransactionEntity
+import com.example.garmento.core.util.UserSession
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -28,8 +29,11 @@ class ReportsRepository @Inject constructor(
     private val customerDao: CustomerDao,
     private val planDao: PlanDao
 ) {
+    private fun activeCompanyId(): String? = UserSession.currentCompanyId?.takeIf { it.isNotBlank() }
+
     suspend fun getTransactionsBetween(startDate: LocalDate, endDate: LocalDate): List<TransactionEntity> {
-        return transactionDao.getAllTransactions().first()
+        val cid = activeCompanyId() ?: return emptyList()
+        return transactionDao.getAllTransactions(cid).first()
             .filter { it.dateIn(startDate, endDate) }
     }
 
@@ -38,9 +42,10 @@ class ReportsRepository @Inject constructor(
     }
 
     suspend fun getTransactionSummary(startDate: LocalDate, endDate: LocalDate): TransactionSummary {
-        val transactions = transactionDao.getAllTransactions().first()
+        val cid = activeCompanyId() ?: return TransactionSummary()
+        val transactions = transactionDao.getAllTransactions(cid).first()
             .filter { it.dateIn(startDate, endDate) }
-        val orders = orderDao.getActiveOrders().first()
+        val orders = orderDao.getActiveOrders(cid).first()
             .filter { it.dateIn(startDate, endDate) }
         return TransactionSummary(
             totalRevenue = transactions.sumOf { it.amount },
@@ -52,14 +57,15 @@ class ReportsRepository @Inject constructor(
     }
 
     suspend fun getRevenuePerPlan(startDate: LocalDate, endDate: LocalDate): List<Pair<String, Double>> {
-        val transactions = transactionDao.getAllTransactions().first()
+        val cid = activeCompanyId() ?: return emptyList()
+        val transactions = transactionDao.getAllTransactions(cid).first()
             .filter { it.dateIn(startDate, endDate) }
         if (transactions.isEmpty()) return emptyList()
 
-        val subscriptions = subscriptionDao.getAllSubscriptions()
+        val subscriptions = subscriptionDao.getAllSubscriptions(cid)
             .associateBy { it.id }
         val planIds = subscriptions.values.mapNotNull { it.plan_id }.toSet()
-        val plans = planDao.getAllPlans().first()
+        val plans = planDao.getAllPlans(cid).first()
             .filter { it.id in planIds }
             .associateBy { it.id }
 
@@ -72,14 +78,15 @@ class ReportsRepository @Inject constructor(
     }
 
     suspend fun getOrdersPerCustomer(startDate: LocalDate, endDate: LocalDate): List<Pair<String, Int>> {
-        val orders = orderDao.getActiveOrders().first()
+        val cid = activeCompanyId() ?: return emptyList()
+        val orders = orderDao.getActiveOrders(cid).first()
             .filter { it.dateIn(startDate, endDate) }
         if (orders.isEmpty()) return emptyList()
 
-        val subscriptions = subscriptionDao.getAllSubscriptions()
+        val subscriptions = subscriptionDao.getAllSubscriptions(cid)
             .associateBy { it.id }
         val customerIds = subscriptions.values.map { it.customer_id }.toSet()
-        val customers = customerDao.getAllCustomers().first()
+        val customers = customerDao.getAllCustomers(cid).first()
             .filter { it.id in customerIds }
             .associateBy { it.id }
 

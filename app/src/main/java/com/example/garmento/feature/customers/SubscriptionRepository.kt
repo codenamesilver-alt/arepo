@@ -9,6 +9,7 @@ import com.example.garmento.core.domain.model.SubscriptionStatus
 import com.example.garmento.core.domain.model.SubscriptionPlan
 import com.example.garmento.core.domain.model.Transaction
 import com.example.garmento.core.domain.model.TransactionType
+import com.example.garmento.core.util.UserSession
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.Serializable
@@ -21,6 +22,7 @@ import javax.inject.Singleton
 @Serializable
 private data class SupabaseSubscription(
     val id: String,
+    val company_id: String? = null,
     val customer_id: String,
     val plan_id: String,
     val start_date: String,
@@ -35,6 +37,7 @@ private data class SupabaseSubscription(
 @Serializable
 private data class SupabaseTransaction(
     val id: String,
+    val company_id: String? = null,
     val customer_id: String,
     val subscription_id: String,
     val amount: Double,
@@ -49,11 +52,14 @@ class SubscriptionRepository @Inject constructor(
     private val transactionDao: TransactionDao,
     private val supabase: SupabaseClient
 ) {
+    private fun activeCompanyId(): String? = UserSession.currentCompanyId?.takeIf { it.isNotBlank() }
+
     suspend fun createSubscription(
         customerId: UUID,
         plan: SubscriptionPlan,
         paymentMethod: String
     ): Subscription {
+        val cid = activeCompanyId()
         val now = LocalDate.now()
         val endDate = now.plusDays(plan.durationDays.toLong())
 
@@ -68,13 +74,14 @@ class SubscriptionRepository @Inject constructor(
         )
 
         // Save to Room
-        subscriptionDao.insertSubscription(subscription.toEntity())
+        subscriptionDao.insertSubscription(subscription.toEntity(cid))
 
         // Save to Supabase
         try {
             supabase.from("subscriptions").insert(
                 SupabaseSubscription(
                     id = subscription.id.toString(),
+                    company_id = cid,
                     customer_id = customerId.toString(),
                     plan_id = plan.id.toString(),
                     start_date = now.toString(),
@@ -96,12 +103,13 @@ class SubscriptionRepository @Inject constructor(
             type = TransactionType.NEW,
             paymentMethod = paymentMethod
         )
-        transactionDao.insertTransaction(transaction.toEntity())
+        transactionDao.insertTransaction(transaction.toEntity(cid))
 
         try {
             supabase.from("transactions").insert(
                 SupabaseTransaction(
                     id = transaction.id.toString(),
+                    company_id = cid,
                     customer_id = customerId.toString(),
                     subscription_id = subscription.id.toString(),
                     amount = plan.amount,
@@ -121,19 +129,27 @@ class SubscriptionRepository @Inject constructor(
         plan: SubscriptionPlan,
         paymentMethod: String
     ): Subscription {
+        val cid = activeCompanyId()
         // Mark old as renewed
-        val oldSub = subscriptionDao.getSubscriptionById(oldSubscriptionId.toString())
+        val oldSub = subscriptionDao.getSubscriptionById(oldSubscriptionId.toString(), cid ?: "")
         if (oldSub != null) {
-            subscriptionDao.updateSubscription(
-                oldSub.copy(status = "renewed")
-            )
+            val renewedSub = oldSub.copy(status = "renewed")
+            subscriptionDao.updateSubscription(renewedSub)
+            try {
+                supabase.from("subscriptions").update(
+                    mapOf("status" to "renewed")
+                ) {
+                    filter { eq("id", renewedSub.id) }
+                }
+            } catch (_: Exception) { }
         }
 
         return createSubscription(customerId, plan, paymentMethod)
     }
 
     suspend fun updateSubscriptionQuota(subscription: Subscription) {
-        subscriptionDao.updateSubscription(subscription.toEntity())
+        val cid = activeCompanyId()
+        subscriptionDao.updateSubscription(subscription.toEntity(cid))
         try {
             supabase.from("subscriptions").update(
                 mapOf(
@@ -146,8 +162,25 @@ class SubscriptionRepository @Inject constructor(
         } catch (_: Exception) { }
     }
 
+    suspend fun updateSubscriptionFields(subscription: Subscription) {
+        val cid = activeCompanyId()
+        subscriptionDao.updateSubscription(subscription.toEntity(cid))
+        try {
+            supabase.from("subscriptions").update(
+                mapOf(
+                    "end_date" to subscription.endDate.toString(),
+                    "clothes_used" to subscription.clothesUsed,
+                    "status" to subscription.status.value
+                )
+            ) {
+                filter { eq("id", subscription.id.toString()) }
+            }
+        } catch (_: Exception) { }
+    }
+
     suspend fun getSubscriptionById(id: String): Subscription? {
-        return subscriptionDao.getSubscriptionById(id)?.toDomain()
+        val cid = activeCompanyId() ?: return null
+        return subscriptionDao.getSubscriptionById(id, cid)?.toDomain()
     }
 
     private fun SubscriptionEntity.toDomain() = Subscription(
@@ -163,8 +196,9 @@ class SubscriptionRepository @Inject constructor(
         createdAt = LocalDateTime.parse(created_at)
     )
 
-    private fun Subscription.toEntity() = SubscriptionEntity(
+    private fun Subscription.toEntity(cid: String?) = SubscriptionEntity(
         id = id.toString(),
+        companyId = cid ?: "",
         customer_id = customerId.toString(),
         plan_id = planId.toString(),
         start_date = startDate.toString(),
@@ -176,8 +210,9 @@ class SubscriptionRepository @Inject constructor(
         created_at = createdAt.toString()
     )
 
-    private fun Transaction.toEntity() = TransactionEntity(
+    private fun Transaction.toEntity(cid: String?) = TransactionEntity(
         id = id.toString(),
+        companyId = cid ?: "",
         customer_id = customerId.toString(),
         subscription_id = subscriptionId.toString(),
         amount = amount,
