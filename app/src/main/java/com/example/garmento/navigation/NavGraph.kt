@@ -8,7 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.garmento.feature.auth.LoginScreen
 import com.example.garmento.feature.auth.SessionGateScreen
-import com.example.garmento.feature.auth.StaffListScreen
+import com.example.garmento.feature.team.TeamScreen
 import com.example.garmento.feature.customer_portal.CustomerPortalScreen
 import com.example.garmento.feature.customers.CustomerDetailScreen
 import com.example.garmento.feature.customers.CustomerListScreen
@@ -257,7 +257,7 @@ fun NavGraph(
         }
 
         composable(Screen.Staff.route) {
-            StaffListScreen(
+            TeamScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
