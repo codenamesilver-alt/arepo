@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "customers")
 data class CustomerEntity(
     @PrimaryKey val id: String,
+    val companyId: String = "",
     val name: String,
     val phone: String,
     val address: String,
@@ -17,6 +18,7 @@ data class CustomerEntity(
 @Entity(tableName = "subscription_plans")
 data class PlanEntity(
     @PrimaryKey val id: String,
+    val companyId: String = "",
     val name: String,
     val duration_days: Int,
     val amount: Double,
@@ -28,6 +30,7 @@ data class PlanEntity(
 @Entity(tableName = "subscriptions")
 data class SubscriptionEntity(
     @PrimaryKey val id: String,
+    val companyId: String = "",
     val customer_id: String,
     val plan_id: String,
     val start_date: String,
@@ -42,6 +45,7 @@ data class SubscriptionEntity(
 @Entity(tableName = "orders")
 data class OrderEntity(
     @PrimaryKey val id: String,
+    val companyId: String = "",
     val subscription_id: String,
     val order_number: String,
     val clothes_count: Int,
@@ -50,12 +54,16 @@ data class OrderEntity(
     val order_date: String,
     val is_voided: Boolean,
     val void_reason: String?,
-    val grace_period: Boolean
+    val grace_period: Boolean,
+    val delivery_date: String?,
+    val delivery_status: String,
+    val delivery_notes: String?
 )
 
 @Entity(tableName = "transactions")
 data class TransactionEntity(
     @PrimaryKey val id: String,
+    val companyId: String = "",
     val customer_id: String,
     val subscription_id: String,
     val amount: Double,
@@ -67,6 +75,7 @@ data class TransactionEntity(
 @Entity(tableName = "pending_sync")
 data class PendingSyncEntity(
     @PrimaryKey val id: String,
+    val companyId: String = "",
     val table_name: String,
     val payload_json: String,
     val created_at: String,

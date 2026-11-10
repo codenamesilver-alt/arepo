@@ -12,14 +12,17 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PlanDao {
 
-    @Query("SELECT * FROM subscription_plans ORDER BY created_at DESC")
-    fun getAllPlans(): Flow<List<PlanEntity>>
+    @Query("SELECT * FROM subscription_plans WHERE companyId = :companyId ORDER BY created_at DESC")
+    fun getAllPlans(companyId: String = ""): Flow<List<PlanEntity>>
 
-    @Query("SELECT * FROM subscription_plans WHERE is_active = 1 ORDER BY name ASC")
-    fun getActivePlans(): Flow<List<PlanEntity>>
+    @Query("SELECT * FROM subscription_plans WHERE companyId = :companyId ORDER BY created_at DESC")
+    suspend fun getAllPlansOnce(companyId: String = ""): List<PlanEntity>
 
-    @Query("SELECT * FROM subscription_plans WHERE id = :id")
-    suspend fun getPlanById(id: String): PlanEntity?
+    @Query("SELECT * FROM subscription_plans WHERE companyId = :companyId AND is_active = 1 ORDER BY name ASC")
+    fun getActivePlans(companyId: String = ""): Flow<List<PlanEntity>>
+
+    @Query("SELECT * FROM subscription_plans WHERE id = :id AND companyId = :companyId")
+    suspend fun getPlanById(id: String, companyId: String = ""): PlanEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlan(plan: PlanEntity)
@@ -33,6 +36,6 @@ interface PlanDao {
     @Delete
     suspend fun deletePlan(plan: PlanEntity)
 
-    @Query("DELETE FROM subscription_plans")
-    suspend fun deleteAllPlans()
+    @Query("DELETE FROM subscription_plans WHERE companyId = :companyId")
+    suspend fun deleteAllPlans(companyId: String = "")
 }

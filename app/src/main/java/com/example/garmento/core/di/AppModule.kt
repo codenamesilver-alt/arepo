@@ -56,7 +56,7 @@ object AppModule {
             context,
             GarmentoDatabase::class.java,
             Constants.DATABASE_NAME
-        ).addMigrations(GarmentoDatabase.MIGRATION_1_2).build()
+        ).addMigrations(GarmentoDatabase.MIGRATION_1_2).fallbackToDestructiveMigration().build()
     }
 
     @Provides

@@ -11,26 +11,26 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SubscriptionDao {
 
-    @Query("SELECT * FROM subscriptions WHERE customer_id = :customerId ORDER BY created_at DESC")
-    fun getSubscriptionsByCustomer(customerId: String): Flow<List<SubscriptionEntity>>
+    @Query("SELECT * FROM subscriptions WHERE companyId = :companyId AND customer_id = :customerId ORDER BY created_at DESC")
+    fun getSubscriptionsByCustomer(customerId: String, companyId: String = ""): Flow<List<SubscriptionEntity>>
 
-    @Query("SELECT * FROM subscriptions WHERE id = :id")
-    suspend fun getSubscriptionById(id: String): SubscriptionEntity?
+    @Query("SELECT * FROM subscriptions WHERE id = :id AND companyId = :companyId")
+    suspend fun getSubscriptionById(id: String, companyId: String = ""): SubscriptionEntity?
 
-    @Query("SELECT * FROM subscriptions WHERE customer_id = :customerId AND status = 'active'")
-    suspend fun getActiveSubscriptionForCustomer(customerId: String): SubscriptionEntity?
+    @Query("SELECT * FROM subscriptions WHERE companyId = :companyId AND customer_id = :customerId AND status = 'active'")
+    suspend fun getActiveSubscriptionForCustomer(customerId: String, companyId: String = ""): SubscriptionEntity?
 
-    @Query("SELECT * FROM subscriptions WHERE status = 'active' AND end_date <= :dateStr")
-    suspend fun getExpiringSubscriptions(dateStr: String): List<SubscriptionEntity>
+    @Query("SELECT * FROM subscriptions WHERE companyId = :companyId AND status = 'active' AND end_date <= :dateStr")
+    suspend fun getExpiringSubscriptions(dateStr: String, companyId: String = ""): List<SubscriptionEntity>
 
-    @Query("SELECT * FROM subscriptions WHERE status = 'active'")
-    suspend fun getAllActiveSubscriptions(): List<SubscriptionEntity>
+    @Query("SELECT * FROM subscriptions WHERE companyId = :companyId AND status = 'active'")
+    suspend fun getAllActiveSubscriptions(companyId: String = ""): List<SubscriptionEntity>
 
-    @Query("SELECT * FROM subscriptions ORDER BY created_at DESC")
-    suspend fun getAllSubscriptions(): List<SubscriptionEntity>
+    @Query("SELECT * FROM subscriptions WHERE companyId = :companyId ORDER BY created_at DESC")
+    suspend fun getAllSubscriptions(companyId: String = ""): List<SubscriptionEntity>
 
-    @Query("SELECT COUNT(*) FROM subscriptions WHERE status = 'active'")
-    suspend fun getActiveSubscriptionCount(): Int
+    @Query("SELECT COUNT(DISTINCT customer_id) FROM subscriptions WHERE companyId = :companyId AND status = 'active' AND end_date >= :dateStr")
+    suspend fun getActiveSubscriptionCount(dateStr: String, companyId: String = ""): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSubscription(subscription: SubscriptionEntity)
@@ -41,6 +41,6 @@ interface SubscriptionDao {
     @Update
     suspend fun updateSubscription(subscription: SubscriptionEntity)
 
-    @Query("DELETE FROM subscriptions")
-    suspend fun deleteAllSubscriptions()
+    @Query("DELETE FROM subscriptions WHERE companyId = :companyId")
+    suspend fun deleteAllSubscriptions(companyId: String = "")
 }
