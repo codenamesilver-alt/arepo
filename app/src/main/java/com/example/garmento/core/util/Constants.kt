@@ -27,4 +27,6 @@ object Constants {
     const val OVERAGE_RATE_PER_ITEM = 12.5
 
     const val SESSION_DURATION_MS = 7L * 24 * 60 * 60 * 1000
+
+    const val GOOGLE_WEB_CLIENT_ID = "198428293304-pah1oucibk08revph9gvcs0rhaj87g9i.apps.googleusercontent.com"
 }

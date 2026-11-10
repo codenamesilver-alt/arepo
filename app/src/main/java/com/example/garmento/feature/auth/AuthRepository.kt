@@ -8,6 +8,7 @@ import com.example.garmento.core.util.UserSession
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
+import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.user.UserSession as SupabaseSession
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,6 +21,7 @@ interface AuthRepository {
     val storedRole: Flow<String?>
     fun currentSession(): SupabaseSession?
     suspend fun signInWithGoogle(): Boolean
+    suspend fun signInWithGoogleIdToken(idToken: String): Boolean
     suspend fun signOut()
 }
 
@@ -63,6 +65,28 @@ class AuthRepositoryImpl @Inject constructor(
             } else {
                 false
             }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    override suspend fun signInWithGoogleIdToken(idToken: String): Boolean {
+        return try {
+            supabase.auth.signInWith(IDToken) {
+                this.idToken = idToken
+                provider = Google
+            }
+            val user = supabase.auth.currentUserOrNull()
+            UserSession.setUserId(user?.id)
+            UserSession.setEmail(user?.email)
+            UserSession.save(dataStore)
+            dataStore.edit { prefs ->
+                prefs[Constants.SESSION_KEY] = true
+                prefs[Constants.LOGIN_TIME_KEY] = System.currentTimeMillis()
+                user?.id?.let { prefs[Constants.USER_ID_KEY] = it }
+                user?.email?.let { prefs[Constants.EMAIL_KEY] = it }
+            }
+            true
         } catch (e: Exception) {
             false
         }

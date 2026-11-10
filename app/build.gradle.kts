@@ -103,6 +103,9 @@ dependencies {
     // AndroidX Browser (Custom Tabs for Supabase Google OAuth)
     implementation("androidx.browser:browser:1.8.0")
 
+    // Google Sign-In (native IDToken flow)
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+
     // Ktor
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
