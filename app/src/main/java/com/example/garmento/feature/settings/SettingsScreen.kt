@@ -14,10 +14,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -27,6 +31,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.garmento.core.util.UserSession
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,6 +51,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isAdmin = UserSession.isAdmin
 
     Scaffold(
         topBar = {
@@ -56,8 +63,8 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -86,46 +93,105 @@ fun SettingsScreen(
                 }
             }
 
-            // Grace Period
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Grace Period", style = MaterialTheme.typography.titleSmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Allow orders for ${uiState.gracePeriodDays} day(s) after subscription expires",
-                        style = MaterialTheme.typography.bodySmall
+            // Company switcher
+            if (uiState.companies.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    var sliderPosition by remember {
-                        mutableFloatStateOf(uiState.gracePeriodDays.toFloat())
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Company", style = MaterialTheme.typography.titleSmall)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (uiState.companies.size > 1) {
+                            var expanded by remember { mutableStateOf(false) }
+                            val selectedName = uiState.companies
+                                .firstOrNull { it.id == uiState.currentCompanyId }?.name
+                                ?: uiState.companies.firstOrNull()?.name
+                                ?: ""
+                            ExposedDropdownMenuBox(
+                                expanded = expanded,
+                                onExpandedChange = { expanded = it }
+                            ) {
+                                OutlinedTextField(
+                                    value = selectedName,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                    },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth()
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    uiState.companies.forEach { company ->
+                                        DropdownMenuItem(
+                                            text = { Text(company.name) },
+                                            onClick = {
+                                                viewModel.switchCompany(company.id)
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            Text(
+                                uiState.companies.firstOrNull()?.name ?: "",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
+                }
+            }
 
-                    Slider(
-                        value = sliderPosition,
-                        onValueChange = { sliderPosition = it },
-                        onValueChangeFinished = {
-                            viewModel.onGracePeriodChange(sliderPosition.roundToInt())
-                        },
-                        valueRange = 0f..7f,
-                        steps = 6
+            if (isAdmin) {
+                // Grace Period
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("0 days", style = MaterialTheme.typography.labelSmall)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Grace Period", style = MaterialTheme.typography.titleSmall)
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "${sliderPosition.roundToInt()} days",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            "Allow orders for ${uiState.gracePeriodDays} day(s) after subscription expires",
+                            style = MaterialTheme.typography.bodySmall
                         )
-                        Text("7 days", style = MaterialTheme.typography.labelSmall)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        var sliderPosition by remember {
+                            mutableFloatStateOf(uiState.gracePeriodDays.toFloat())
+                        }
+
+                        Slider(
+                            value = sliderPosition,
+                            onValueChange = { sliderPosition = it },
+                            onValueChangeFinished = {
+                                viewModel.onGracePeriodChange(sliderPosition.roundToInt())
+                            },
+                            valueRange = 0f..7f,
+                            steps = 6
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("0 days", style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                "${sliderPosition.roundToInt()} days",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text("7 days", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
@@ -158,20 +224,22 @@ fun SettingsScreen(
                 }
             }
 
-            // Staff Management
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onNavigateToStaff,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Staff Management", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        "Manage staff roles and access",
-                        style = MaterialTheme.typography.bodySmall
+            if (isAdmin) {
+                // Staff Management
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onNavigateToStaff,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Staff Management", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "Manage staff roles and access",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
 
