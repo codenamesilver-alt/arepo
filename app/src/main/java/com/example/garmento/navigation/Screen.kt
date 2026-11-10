@@ -42,4 +42,7 @@ sealed class Screen(val route: String) {
     data object CustomerPortal : Screen("customer_portal/{publicCode}") {
         fun createRoute(publicCode: String): String = "customer_portal/$publicCode"
     }
+    data object InviteAccept : Screen("invite_accept?token={token}") {
+        fun createRoute(token: String): String = "invite_accept?token=$token"
+    }
 }

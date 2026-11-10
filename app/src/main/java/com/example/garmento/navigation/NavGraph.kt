@@ -14,6 +14,7 @@ import com.example.garmento.feature.customers.CustomerDetailScreen
 import com.example.garmento.feature.customers.CustomerListScreen
 import com.example.garmento.feature.customers.NewCustomerScreen
 import com.example.garmento.feature.customers.NewSubscriptionScreen
+import com.example.garmento.feature.invite.InviteAcceptScreen
 import com.example.garmento.feature.dashboard.ActiveSubscriptionsScreen
 import com.example.garmento.feature.dashboard.DashboardScreen
 import com.example.garmento.feature.dashboard.MainTab
@@ -284,6 +285,28 @@ fun NavGraph(
         ) { backStackEntry ->
             val publicCode = backStackEntry.arguments?.getString("publicCode") ?: ""
             CustomerPortalScreen(publicCode = publicCode)
+        }
+
+        composable(
+            route = Screen.InviteAccept.route,
+            arguments = listOf(
+                navArgument("token") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            InviteAcceptScreen(
+                token = token,
+                onSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
