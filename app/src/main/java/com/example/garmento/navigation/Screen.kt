@@ -45,4 +45,6 @@ sealed class Screen(val route: String) {
     data object InviteAccept : Screen("invite_accept?token={token}") {
         fun createRoute(token: String): String = "invite_accept?token=$token"
     }
+    data object CompanyCreate : Screen("company_create")
+    data object CompanyPicker : Screen("company_picker")
 }

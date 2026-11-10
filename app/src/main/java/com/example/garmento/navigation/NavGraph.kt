@@ -8,6 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.garmento.feature.auth.LoginScreen
 import com.example.garmento.feature.auth.SessionGateScreen
+import com.example.garmento.feature.company.CompanyCreateScreen
+import com.example.garmento.feature.company.CompanyPickerScreen
 import com.example.garmento.feature.team.TeamScreen
 import com.example.garmento.feature.customer_portal.CustomerPortalScreen
 import com.example.garmento.feature.customers.CustomerDetailScreen
@@ -49,13 +51,23 @@ fun NavGraph(
 
         composable(Screen.Session.route) {
             SessionGateScreen(
-                onLoggedIn = {
-                    navController.navigate(Screen.Dashboard.route) {
+                onLoggedOut = {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Session.route) { inclusive = true }
                     }
                 },
-                onLoggedOut = {
-                    navController.navigate(Screen.Login.route) {
+                onNeedsCompany = {
+                    navController.navigate(Screen.CompanyCreate.route) {
+                        popUpTo(Screen.Session.route) { inclusive = true }
+                    }
+                },
+                onPickCompany = {
+                    navController.navigate(Screen.CompanyPicker.route) {
+                        popUpTo(Screen.Session.route) { inclusive = true }
+                    }
+                },
+                onLoggedIn = {
+                    navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Session.route) { inclusive = true }
                     }
                 }
@@ -65,8 +77,29 @@ fun NavGraph(
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.Dashboard.route) {
+                    navController.navigate(Screen.Session.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.CompanyCreate.route) {
+            CompanyCreateScreen(
+                onCreated = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.CompanyCreate.route) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.CompanyPicker.route) {
+            CompanyPickerScreen(
+                onSelected = { _ ->
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.CompanyPicker.route) { inclusive = true }
                     }
                 }
             )
