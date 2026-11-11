@@ -37,3 +37,12 @@ Task 10+11: complete (commits, review clean)
   Ruling: Fixed plan bug — observeCustomers() was returning dead MutableStateFlow, replaced with reactive flatMapLatest
 
 Task 12+13: complete (commits feb4952, review clean)
+
+Task 14: complete (commits a5d60a3, review clean)
+
+Task 15+16: complete (commits 636d60d, review clean)
+  Ruling: POI 4.0+ MethodHandle incompatible with minSdk 24 — pinned to POI 3.17. Enabled core-library desugaring.
+
+Task 17+18: complete (commits, review clean)
+
+Task 19+20: complete (commits 7f4875f, review clean)

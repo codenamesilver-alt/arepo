@@ -14,17 +14,24 @@ import com.example.garmento.feature.team.TeamScreen
 import com.example.garmento.feature.customer_portal.CustomerPortalScreen
 import com.example.garmento.feature.customers.CustomerDetailScreen
 import com.example.garmento.feature.customers.CustomerListScreen
+import com.example.garmento.feature.customers.AddCustomerScreen
 import com.example.garmento.feature.customers.NewCustomerScreen
+import com.example.garmento.feature.expenses.ExpensesScreen
+import com.example.garmento.feature.items.ItemScreen
+import com.example.garmento.feature.services.ServicesScreen
 import com.example.garmento.feature.customers.NewSubscriptionScreen
 import com.example.garmento.feature.invite.InviteAcceptScreen
 import com.example.garmento.feature.dashboard.ActiveSubscriptionsScreen
 import com.example.garmento.feature.dashboard.DashboardScreen
 import com.example.garmento.feature.dashboard.MainTab
+import com.example.garmento.feature.orders.DeliveriesForDateScreen
 import com.example.garmento.feature.orders.OrderEditScreen
+import com.example.garmento.feature.orders.OrderHistoryScreen
 import com.example.garmento.feature.orders.OrdersScreen
 import com.example.garmento.feature.orders.PlacedOrdersScreen
 import com.example.garmento.feature.plans.PlanEditScreen
 import com.example.garmento.feature.plans.PlansListScreen
+import com.example.garmento.feature.plans.SubscriptionScreen
 import com.example.garmento.feature.reminders.RemindersScreen
 import com.example.garmento.feature.reports.ReportsScreen
 import com.example.garmento.feature.settings.SettingsScreen
@@ -80,6 +87,9 @@ fun NavGraph(
                     navController.navigate(Screen.Session.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToInvite = {
+                    navController.navigate(Screen.InviteAccept.createRoute(""))
                 }
             )
         }
@@ -105,22 +115,53 @@ fun NavGraph(
             )
         }
 
+        composable(Screen.DeliveriesForDate.route) { backStackEntry ->
+            val date = backStackEntry.arguments?.getString("date") ?: ""
+            DeliveriesForDateScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Dashboard.route) {
             DashboardScreen(
+                onNavigateToDeliveriesForDate = { date ->
+                    navController.navigate(Screen.DeliveriesForDate.createRoute(date))
+                },
                 onNavigateToReminders = {
                     navController.navigate(Screen.Reminders.route)
                 },
                 onNavigateToCustomers = {
                     navController.navigate(Screen.CustomerList.route)
                 },
+                onNavigateToAddCustomer = {
+                    navController.navigate(Screen.AddCustomer.route)
+                },
+                onNavigateToSubscription = {
+                    navController.navigate(Screen.Subscription.route)
+                },
+                onNavigateToServices = {
+                    navController.navigate(Screen.Services.route)
+                },
+                onNavigateToItem = {
+                    navController.navigate(Screen.Item.route)
+                },
+                onNavigateToOrderHistory = {
+                    navController.navigate(Screen.OrderHistory.route)
+                },
+                onNavigateToExpenses = {
+                    navController.navigate(Screen.Expenses.route)
+                },
+                onNavigateToReports = {
+                    navController.navigate(Screen.Reports.route)
+                },
                 onNavigateToOrders = {
+                    navController.navigate(Screen.Orders.createRoute())
+                },
+                onNavigateToPlaceOrder = {
                     navController.navigate(Screen.Orders.createRoute())
                 },
                 onNavigateToPlans = {
                     navController.navigate(Screen.PlansList.route)
-                },
-                onNavigateToReports = {
-                    navController.navigate(Screen.Reports.route)
                 },
                 onNavigateToActiveSubscriptions = {
                     navController.navigate(Screen.ActiveSubscriptions.route)
@@ -144,6 +185,15 @@ fun NavGraph(
                     navController.navigate(Screen.PlanEdit.createRoute())
                 },
                 onNavigateToTab = { tab -> navigateToTab(navController, tab) }
+            )
+        }
+
+        composable(Screen.Subscription.route) {
+            SubscriptionScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSubscribeCustomer = { customerId ->
+                    navController.navigate(Screen.NewSubscription.createRoute(customerId))
+                }
             )
         }
 
@@ -180,6 +230,25 @@ fun NavGraph(
             NewCustomerScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        composable(Screen.AddCustomer.route) {
+            AddCustomerScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onEditCustomer = { id -> navController.navigate(Screen.CustomerEdit.createRoute(id)) }
+            )
+        }
+
+        composable(Screen.Services.route) {
+            ServicesScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Item.route) {
+            ItemScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Expenses.route) {
+            ExpensesScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(
@@ -267,6 +336,10 @@ fun NavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToTab = { tab -> navigateToTab(navController, tab) }
             )
+        }
+
+        composable(Screen.OrderHistory.route) {
+            OrderHistoryScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.PlacedOrders.route) {

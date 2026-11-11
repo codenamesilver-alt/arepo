@@ -20,6 +20,8 @@ data class NewSubscriptionUiState(
     val availablePlans: List<SubscriptionPlan> = emptyList(),
     val selectedPlan: SubscriptionPlan? = null,
     val paymentMethod: String = "cash",
+    val willRenew: Boolean = false,
+    val activeSubscriptionEnd: String? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val success: Boolean = false,
@@ -29,6 +31,7 @@ data class NewSubscriptionUiState(
 @HiltViewModel
 class NewSubscriptionViewModel @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
+    private val customerRepository: CustomerRepository,
     private val planRepository: PlanRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -41,6 +44,20 @@ class NewSubscriptionViewModel @Inject constructor(
     init {
         customerId?.let { _uiState.update { s -> s.copy(customerId = UUID.fromString(it)) } }
         loadPlans()
+        checkActiveSubscription()
+    }
+
+    private fun checkActiveSubscription() {
+        val id = customerId ?: return
+        viewModelScope.launch {
+            val active = customerRepository.getActiveSubscription(id)
+            _uiState.update {
+                it.copy(
+                    willRenew = active != null && !active.isExpired,
+                    activeSubscriptionEnd = active?.endDate?.toString()
+                )
+            }
+        }
     }
 
     fun loadPlans() {
@@ -74,11 +91,21 @@ class NewSubscriptionViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
             try {
-                subscriptionRepository.createSubscription(
-                    customerId = state.customerId,
-                    plan = state.selectedPlan,
-                    paymentMethod = state.paymentMethod
-                )
+                val existingActive = customerRepository.getActiveSubscription(state.customerId.toString())
+                if (existingActive != null) {
+                    subscriptionRepository.renewSubscription(
+                        oldSubscriptionId = existingActive.id,
+                        customerId = state.customerId,
+                        plan = state.selectedPlan,
+                        paymentMethod = state.paymentMethod
+                    )
+                } else {
+                    subscriptionRepository.createSubscription(
+                        customerId = state.customerId,
+                        plan = state.selectedPlan,
+                        paymentMethod = state.paymentMethod
+                    )
+                }
                 _uiState.update { it.copy(isSaving = false, success = true) }
                 onSuccess()
             } catch (e: Exception) {

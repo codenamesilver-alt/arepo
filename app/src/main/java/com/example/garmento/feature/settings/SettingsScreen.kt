@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.garmento.core.util.UserSession
+import com.example.garmento.feature.orders.OrderLookupViewModel
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,15 +51,17 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToStaff: () -> Unit = {},
     onLogout: () -> Unit = {},
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    orderLookupVm: OrderLookupViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val lookupState by orderLookupVm.uiState.collectAsStateWithLifecycle()
     val isAdmin = UserSession.isAdmin
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -73,7 +78,8 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Username
@@ -239,6 +245,39 @@ fun SettingsScreen(
                             "Manage staff roles and access",
                             style = MaterialTheme.typography.bodySmall
                         )
+                    }
+                }
+
+                // Order lookup & delete
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Order Lookup", style = MaterialTheme.typography.titleSmall)
+                        OutlinedTextField(
+                            value = lookupState.orderNumber,
+                            onValueChange = orderLookupVm::onOrderNumberChange,
+                            label = { Text("Order Number") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { orderLookupVm.fetch() }) { Text("Fetch") }
+                            Button(onClick = { orderLookupVm.delete() }) { Text("Delete") }
+                        }
+                        lookupState.message?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        }
+                        lookupState.foundOrder?.let { o ->
+                            Text("Customer: ${o.customer_id}", style = MaterialTheme.typography.bodySmall)
+                            Text("Date: ${o.order_date}", style = MaterialTheme.typography.bodySmall)
+                            Text("Clothes: ${o.clothes_count}", style = MaterialTheme.typography.bodySmall)
+                            Text("Total: Rs.${String.format("%.2f", o.total_amount)}", style = MaterialTheme.typography.bodySmall)
+                            Text("Paid: Rs.${String.format("%.2f", o.paid_amount)}", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }

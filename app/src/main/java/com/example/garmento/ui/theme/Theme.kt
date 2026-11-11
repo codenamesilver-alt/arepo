@@ -3,70 +3,88 @@ package com.example.garmento.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF1565C0),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFD1E4FF),
-    onPrimaryContainer = Color(0xFF001D36),
-    secondary = Color(0xFF545F71),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFD8E3F8),
-    onSecondaryContainer = Color(0xFF111C2B),
-    tertiary = Color(0xFF6E5676),
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFF8D8FE),
-    onTertiaryContainer = Color(0xFF27132F),
-    background = Color(0xFFFDFBFF),
-    onBackground = Color(0xFF1A1C1E),
-    surface = Color(0xFFFDFBFF),
-    onSurface = Color(0xFF1A1C1E),
-    error = Color(0xFFBA1A1A),
-    onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002)
+    primary = IndigoDye,
+    onPrimary = Color_White,
+    primaryContainer = IndigoContainer,
+    onPrimaryContainer = IndigoDeep,
+    secondary = Slate80,
+    onSecondary = Color_White,
+    secondaryContainer = SlateContainer,
+    onSecondaryContainer = SlateDeep,
+    tertiary = Bronze,
+    onTertiary = Color_White,
+    tertiaryContainer = BronzeContainer,
+    onTertiaryContainer = BronzeDeep,
+    background = Color_White,
+    onBackground = Charcoal,
+    surface = Color_White,
+    onSurface = Charcoal,
+    surfaceVariant = Color_White,
+    onSurfaceVariant = CharcoalMuted,
+    outline = CharcoalFaint,
+    outlineVariant = LinenDeep,
+    error = ErrorRed,
+    onError = Color_White,
+    errorContainer = ErrorContainer,
+    onErrorContainer = OnErrorContainer
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF9ECAFF),
-    onPrimary = Color(0xFF003258),
-    primaryContainer = Color(0xFF004A7C),
-    onPrimaryContainer = Color(0xFFD1E4FF),
-    secondary = Color(0xFFBCC7DB),
-    onSecondary = Color(0xFF263141),
-    secondaryContainer = Color(0xFF3C4758),
-    onSecondaryContainer = Color(0xFFD8E3F8),
-    tertiary = Color(0xFFDBBCE3),
-    onTertiary = Color(0xFF3D2846),
-    tertiaryContainer = Color(0xFF543E5C),
-    onTertiaryContainer = Color(0xFFF8D8FE),
-    background = Color(0xFF1A1C1E),
-    onBackground = Color(0xFFE2E2E6),
-    surface = Color(0xFF1A1C1E),
-    onSurface = Color(0xFFE2E2E6),
-    error = Color(0xFFFFB4AB),
-    onError = Color(0xFF690005),
-    errorContainer = Color(0xFF93000A),
-    onErrorContainer = Color(0xFFFFDAD6)
+    primary = NightIndigo,
+    onPrimary = NightIndigoOn,
+    primaryContainer = NightIndigoContainer,
+    onPrimaryContainer = IndigoContainer,
+    secondary = NightSlate,
+    onSecondary = NightSlateOn,
+    secondaryContainer = NightSlateContainer,
+    onSecondaryContainer = SlateContainer,
+    tertiary = NightBronze,
+    onTertiary = NightBronzeOn,
+    tertiaryContainer = NightBronzeContainer,
+    onTertiaryContainer = BronzeContainer,
+    background = Color_White,
+    onBackground = Charcoal,
+    surface = Color_White,
+    onSurface = Charcoal,
+    surfaceVariant = Color_White,
+    onSurfaceVariant = InkMuted,
+    outline = InkFaint,
+    outlineVariant = NightDeep,
+    error = NightError,
+    onError = NightErrorOn,
+    errorContainer = NightErrorContainer,
+    onErrorContainer = NightOnErrorContainer
+)
+
+private val GarmentoShapes = Shapes(
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(6.dp),
+    medium = RoundedCornerShape(6.dp),
+    large = RoundedCornerShape(6.dp),
+    extraLarge = RoundedCornerShape(10.dp)
 )
 
 @Composable
 fun GarmentoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     darkModeEnabled: Boolean? = null,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val effectiveDarkTheme = darkModeEnabled ?: darkTheme
@@ -84,7 +102,7 @@ fun GarmentoTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+            window.statusBarColor = colorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !effectiveDarkTheme
         }
     }
@@ -92,6 +110,7 @@ fun GarmentoTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = GarmentoShapes,
         content = content
     )
 }

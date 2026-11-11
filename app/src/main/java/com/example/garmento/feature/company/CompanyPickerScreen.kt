@@ -86,7 +86,7 @@ fun CompanyPickerScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Select Company") })
+            TopAppBar(title = { })
         }
     ) { padding ->
         when {

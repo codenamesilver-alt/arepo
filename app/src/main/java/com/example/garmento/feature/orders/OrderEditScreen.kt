@@ -48,7 +48,7 @@ fun OrderEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Order") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -112,7 +112,7 @@ fun OrderEditScreen(
         var voidReason by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showVoidDialog = false },
-            title = { Text("Void Order") },
+            title = { },
             text = {
                 Column {
                     Text("Enter reason for voiding:")

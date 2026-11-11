@@ -1,5 +1,7 @@
 package com.example.garmento.feature.customer_portal
 
+import com.example.garmento.core.util.DateParsing
+
 import com.example.garmento.core.data.local.dao.CustomerDao
 import com.example.garmento.core.data.local.dao.SubscriptionDao
 import com.example.garmento.core.domain.model.Customer
@@ -71,7 +73,7 @@ class CustomerPortalRepository @Inject constructor(
                     address = sc.address ?: "",
                     notes = sc.notes ?: "",
                     publicCode = sc.public_code,
-                    createdAt = LocalDateTime.parse(sc.created_at)
+                    createdAt = DateParsing.parseLocalDateTime(sc.created_at)
                 )
             }
         } catch (_: Exception) {
@@ -83,7 +85,7 @@ class CustomerPortalRepository @Inject constructor(
                     address = entity.address,
                     notes = entity.notes,
                     publicCode = entity.public_code,
-                    createdAt = LocalDateTime.parse(entity.created_at)
+                    createdAt = DateParsing.parseLocalDateTime(entity.created_at)
                 )
             }
         }
@@ -102,13 +104,13 @@ class CustomerPortalRepository @Inject constructor(
                     id = UUID.fromString(ss.id),
                     customerId = UUID.fromString(ss.customer_id),
                     planId = UUID.fromString(ss.plan_id),
-                    startDate = LocalDate.parse(ss.start_date),
-                    endDate = LocalDate.parse(ss.end_date),
+                    startDate = DateParsing.parseLocalDate(ss.start_date),
+                    endDate = DateParsing.parseLocalDate(ss.end_date),
                     clothesQuota = ss.clothes_quota,
                     clothesUsed = ss.clothes_used,
                     status = SubscriptionStatus.fromValue(ss.status),
                     renewedFromId = ss.renewed_from_id?.let { UUID.fromString(it) },
-                    createdAt = LocalDateTime.parse(ss.created_at)
+                    createdAt = DateParsing.parseLocalDateTime(ss.created_at)
                 )
             }
         } catch (_: Exception) {
@@ -117,13 +119,13 @@ class CustomerPortalRepository @Inject constructor(
                     id = UUID.fromString(entity.id),
                     customerId = UUID.fromString(entity.customer_id),
                     planId = UUID.fromString(entity.plan_id),
-                    startDate = LocalDate.parse(entity.start_date),
-                    endDate = LocalDate.parse(entity.end_date),
+                    startDate = DateParsing.parseLocalDate(entity.start_date),
+                    endDate = DateParsing.parseLocalDate(entity.end_date),
                     clothesQuota = entity.clothes_quota,
                     clothesUsed = entity.clothes_used,
                     status = SubscriptionStatus.fromValue(entity.status),
                     renewedFromId = entity.renewed_from_id?.let { UUID.fromString(it) },
-                    createdAt = LocalDateTime.parse(entity.created_at)
+                    createdAt = DateParsing.parseLocalDateTime(entity.created_at)
                 )
             }
         }
@@ -143,7 +145,7 @@ class CustomerPortalRepository @Inject constructor(
                     amount = sp.amount,
                     totalClothes = sp.total_clothes,
                     isActive = sp.is_active,
-                    createdAt = LocalDateTime.parse(sp.created_at)
+                    createdAt = DateParsing.parseLocalDateTime(sp.created_at)
                 )
             }
         } catch (_: Exception) {

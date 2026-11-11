@@ -12,15 +12,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -40,18 +46,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.graphics.Bitmap
 import com.example.garmento.core.domain.model.SubscriptionStatus
 import com.example.garmento.core.util.Constants
+import com.example.garmento.core.util.UserSession
 import com.example.garmento.feature.customer_portal.QrCodeGenerator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerDetailScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToEditCustomer: (String) -> Unit,
     onNavigateToNewSubscription: (String) -> Unit,
-    onNavigateToPlaceOrder: (String) -> Unit,
+    onNavigateToPlaceOrder: (String, String?) -> Unit,
     onNavigateToOrderEdit: (String) -> Unit,
     viewModel: CustomersViewModel = hiltViewModel()
 ) {
     val detailState by viewModel.detailState.collectAsStateWithLifecycle()
+    var subscriptionExpanded by remember { mutableStateOf(false) }
+    val isAdmin = UserSession.isAdmin
 
     LaunchedEffect(Unit) {
         // Detail state is loaded in ViewModel init
@@ -60,10 +70,19 @@ fun CustomerDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(detailState.customer?.name ?: "Customer") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            detailState.customer?.let { onNavigateToEditCustomer(it.id.toString()) }
+                        }
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Customer")
                     }
                 }
             )
@@ -90,7 +109,7 @@ fun CustomerDetailScreen(
             }
             else -> {
                 val customer = detailState.customer!!
-                val sub = detailState.activeSubscription
+                val sub = detailState.selectedSubscription
 
                 Column(
                     modifier = Modifier
@@ -120,32 +139,80 @@ fun CustomerDetailScreen(
                         }
                     }
 
-                    if (sub != null) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
+                    if (detailState.subscriptions.isNotEmpty()) {
+                        Text("Subscription", style = MaterialTheme.typography.titleSmall)
+                        ExposedDropdownMenuBox(
+                            expanded = subscriptionExpanded,
+                            onExpandedChange = { subscriptionExpanded = it }
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    "Active Subscription",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Days left: ${sub.daysRemaining}")
-                                    Text("${sub.remainingClothes} clothes left")
-                                }
-                                if (sub.clothesOverage > 0) {
-                                    Text(
-                                        "+${sub.clothesOverage} over quota",
-                                        color = MaterialTheme.colorScheme.error
+                            OutlinedTextField(
+                                value = sub?.let { s ->
+                                    "${s.startDate} — ${s.endDate} | ${s.remainingClothes}/${s.clothesQuota} clothes | ${s.status.name}"
+                                } ?: "No subscription",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Select subscription") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = subscriptionExpanded) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                            )
+                            ExposedDropdownMenu(
+                                expanded = subscriptionExpanded,
+                                onDismissRequest = { subscriptionExpanded = false }
+                            ) {
+                                detailState.subscriptions.forEach { s ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Column {
+                                                Text("${s.startDate} — ${s.endDate}", style = MaterialTheme.typography.bodyLarge)
+                                                Text(
+                                                    "${s.remainingClothes}/${s.clothesQuota} clothes | ${s.status.name}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = when {
+                                                        s.status == SubscriptionStatus.ACTIVE && !s.isExpired ->
+                                                            MaterialTheme.colorScheme.primary
+                                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                                    }
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            viewModel.selectDetailSubscription(s.id.toString())
+                                            subscriptionExpanded = false
+                                        }
                                     )
+                                }
+                            }
+                        }
+
+                        if (sub != null) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        "Selected Subscription",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Days left: ${sub.daysRemaining}")
+                                        Text("${sub.remainingClothes} clothes left")
+                                    }
+                                    if (sub.clothesOverage > 0) {
+                                        Text(
+                                            "+${sub.clothesOverage} over quota",
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -194,22 +261,26 @@ fun CustomerDetailScreen(
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { onNavigateToNewSubscription(customer.id.toString()) },
-                            modifier = Modifier.weight(1f)
+                    if (isAdmin) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("New Sub")
-                        }
-                        OutlinedButton(
-                            onClick = { onNavigateToPlaceOrder(customer.id.toString()) },
-                            modifier = Modifier.weight(1f),
-                            enabled = sub != null
-                        ) {
-                            Text("Place Order")
+                            Button(
+                                onClick = { onNavigateToNewSubscription(customer.id.toString()) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    if (sub != null && !sub.isExpired) "Renew Plan" else "New Subscription"
+                                )
+                            }
+                            OutlinedButton(
+                                onClick = { onNavigateToPlaceOrder(customer.id.toString(), sub?.id.toString()) },
+                                modifier = Modifier.weight(1f),
+                                enabled = sub != null
+                            ) {
+                                Text("Place Order")
+                            }
                         }
                     }
 

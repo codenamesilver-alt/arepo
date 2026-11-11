@@ -56,6 +56,8 @@ import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
 import com.patrykandpatrick.vico.core.cartesian.layer.ColumnCartesianLayer
+import com.example.garmento.feature.dashboard.MainBottomBar
+import com.example.garmento.feature.dashboard.MainTab
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -66,12 +68,30 @@ import kotlin.math.roundToInt
 @Composable
 fun ReportsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToTab: (MainTab) -> Unit = {},
     viewModel: ReportsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val outstandingOrders by viewModel.outstandingOrders().collectAsStateWithLifecycle(initialValue = emptyList())
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var showPeriodPicker by remember { mutableStateOf(false) }
+
+    var orderStart by remember { mutableStateOf(LocalDate.now().minusDays(7)) }
+    var orderEnd by remember { mutableStateOf(LocalDate.now()) }
+    var subStart by remember { mutableStateOf(LocalDate.now().minusDays(7)) }
+    var subEnd by remember { mutableStateOf(LocalDate.now()) }
+    var expStart by remember { mutableStateOf(LocalDate.now().minusDays(7)) }
+    var expEnd by remember { mutableStateOf(LocalDate.now()) }
+    var deliveryDate by remember { mutableStateOf(LocalDate.now()) }
+
+    var showOrderStartPicker by remember { mutableStateOf(false) }
+    var showOrderEndPicker by remember { mutableStateOf(false) }
+    var showSubStartPicker by remember { mutableStateOf(false) }
+    var showSubEndPicker by remember { mutableStateOf(false) }
+    var showExpStartPicker by remember { mutableStateOf(false) }
+    var showExpEndPicker by remember { mutableStateOf(false) }
+    var showDeliveryPicker2 by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it) }
@@ -80,7 +100,7 @@ fun ReportsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reports") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -88,7 +108,7 @@ fun ReportsScreen(
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -98,6 +118,14 @@ fun ReportsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Text("Daily Sales — Last 10 Days", style = MaterialTheme.typography.titleSmall)
+            RevenueBarChart(
+                entries = uiState.dailySales10Days,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
+
             PeriodSelector(
                 period = uiState.period,
                 onPeriodChange = viewModel::onPeriodChange
@@ -159,6 +187,82 @@ fun ReportsScreen(
                 rows = uiState.ordersPerCustomer.map { (label, value) -> label to value.toString() }
             )
 
+            // Order Report PDF
+            Text("Order Report (PDF)", style = MaterialTheme.typography.titleSmall)
+            DateRangeRow(
+                start = orderStart, end = orderEnd,
+                onStartPick = { showOrderStartPicker = true },
+                onEndPick = { showOrderEndPicker = true }
+            )
+            Button(
+                onClick = { viewModel.generateOrderReportPdf(context, orderStart, orderEnd) },
+                enabled = !uiState.isExporting,
+                modifier = Modifier.fillMaxWidth().height(44.dp)
+            ) { Text("Generate Order Report PDF") }
+
+            // Subscription Report PDF
+            Text("Subscription Report (PDF)", style = MaterialTheme.typography.titleSmall)
+            DateRangeRow(
+                start = subStart, end = subEnd,
+                onStartPick = { showSubStartPicker = true },
+                onEndPick = { showSubEndPicker = true }
+            )
+            Button(
+                onClick = { viewModel.generateSubscriptionReportPdf(context, subStart, subEnd) },
+                enabled = !uiState.isExporting,
+                modifier = Modifier.fillMaxWidth().height(44.dp)
+            ) { Text("Generate Subscription Report PDF") }
+
+            // Expense Report PDF
+            Text("Expense Report (PDF)", style = MaterialTheme.typography.titleSmall)
+            DateRangeRow(
+                start = expStart, end = expEnd,
+                onStartPick = { showExpStartPicker = true },
+                onEndPick = { showExpEndPicker = true }
+            )
+            Button(
+                onClick = { viewModel.generateExpenseReportPdf(context, expStart, expEnd) },
+                enabled = !uiState.isExporting,
+                modifier = Modifier.fillMaxWidth().height(44.dp)
+            ) { Text("Generate Expense Report PDF") }
+
+            // Delivery Report PDF
+            Text("Delivery Report (PDF)", style = MaterialTheme.typography.titleSmall)
+            OutlinedButton(
+                onClick = { showDeliveryPicker2 = true },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Delivery Date: $deliveryDate") }
+            Button(
+                onClick = { viewModel.generateDeliveryReportPdf(context, deliveryDate) },
+                enabled = !uiState.isExporting,
+                modifier = Modifier.fillMaxWidth().height(44.dp)
+            ) { Text("Generate Delivery Report PDF") }
+
+            // Outstanding Payment section
+            Text("Outstanding Payment", style = MaterialTheme.typography.titleSmall)
+            if (outstandingOrders.isEmpty()) {
+                Text("No outstanding payments.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                outstandingOrders.forEach { o ->
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Order #${o.order_number}", style = MaterialTheme.typography.titleSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                            Text("Customer: ${o.customer_name ?: ""}", style = MaterialTheme.typography.bodySmall)
+                            Text("Date: ${o.order_date}", style = MaterialTheme.typography.bodySmall)
+                            Text("Pending: Rs.${String.format("%.2f", o.total_amount - o.paid_amount)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            Button(
+                                onClick = { viewModel.markPaid(o.id) },
+                                modifier = Modifier.fillMaxWidth().height(40.dp)
+                            ) { Text("Mark as Paid") }
+                        }
+                    }
+                }
+            }
+            Button(
+                onClick = { viewModel.generateOutstandingPdf(context) },
+                modifier = Modifier.fillMaxWidth().height(44.dp)
+            ) { Text("Generate Outstanding PDF") }
+
             Button(
                 onClick = { viewModel.exportExcel(context) },
                 enabled = !uiState.isExporting,
@@ -166,9 +270,77 @@ fun ReportsScreen(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(if (uiState.isExporting) "Preparing Excel..." else "Export to Excel")
+                Text(if (uiState.isExporting) "Preparing..." else "Export to Excel")
+            }
+
+            if (showOrderStartPicker) {
+                SimpleDatePicker(initial = orderStart, onConfirm = { orderStart = it; showOrderStartPicker = false }, onDismiss = { showOrderStartPicker = false })
+            }
+            if (showOrderEndPicker) {
+                SimpleDatePicker(initial = orderEnd, onConfirm = { orderEnd = it; showOrderEndPicker = false }, onDismiss = { showOrderEndPicker = false })
+            }
+            if (showSubStartPicker) {
+                SimpleDatePicker(initial = subStart, onConfirm = { subStart = it; showSubStartPicker = false }, onDismiss = { showSubStartPicker = false })
+            }
+            if (showSubEndPicker) {
+                SimpleDatePicker(initial = subEnd, onConfirm = { subEnd = it; showSubEndPicker = false }, onDismiss = { showSubEndPicker = false })
+            }
+            if (showExpStartPicker) {
+                SimpleDatePicker(initial = expStart, onConfirm = { expStart = it; showExpStartPicker = false }, onDismiss = { showExpStartPicker = false })
+            }
+            if (showExpEndPicker) {
+                SimpleDatePicker(initial = expEnd, onConfirm = { expEnd = it; showExpEndPicker = false }, onDismiss = { showExpEndPicker = false })
+            }
+            if (showDeliveryPicker2) {
+                SimpleDatePicker(initial = deliveryDate, onConfirm = { deliveryDate = it; showDeliveryPicker2 = false }, onDismiss = { showDeliveryPicker2 = false })
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateRangeRow(
+    start: LocalDate,
+    end: LocalDate,
+    onStartPick: () -> Unit,
+    onEndPick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedButton(onClick = onStartPick, modifier = Modifier.weight(1f)) {
+            Text("From: $start", style = MaterialTheme.typography.bodySmall)
+        }
+        OutlinedButton(onClick = onEndPick, modifier = Modifier.weight(1f)) {
+            Text("To: $end", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SimpleDatePicker(
+    initial: LocalDate,
+    onConfirm: (LocalDate) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = initial.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                state.selectedDateMillis?.let { millis ->
+                    onConfirm(java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
+                }
+            }) { Text("OK") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    ) {
+        DatePicker(state = state, showModeToggle = false)
     }
 }
 
@@ -259,6 +431,25 @@ private fun RevenueBarChart(
     entries: List<Pair<String, Double>>,
     modifier: Modifier = Modifier
 ) {
+    if (entries.isEmpty()) {
+        Card(modifier = modifier) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "No revenue data for this period",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
+
     val modelProducer = remember { CartesianChartModelProducer() }
     val labels = remember(entries) { entries.map { it.first } }
     val labelsRef = rememberUpdatedState(labels)
@@ -284,7 +475,7 @@ private fun RevenueBarChart(
             startAxis = VerticalAxis.rememberStart(),
             bottomAxis = HorizontalAxis.rememberBottom(
                 valueFormatter = { _, axisValue, _ ->
-                    labelsRef.value.getOrNull(axisValue.roundToInt()) ?: ""
+                    labelsRef.value.getOrNull(axisValue.roundToInt()) ?: axisValue.toInt().toString()
                 }
             )
         ),

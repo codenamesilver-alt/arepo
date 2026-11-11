@@ -96,7 +96,8 @@ class SessionViewModel @Inject constructor(
         }
 
         val session = authRepository.currentSession()
-        val loggedIn = session != null || runCatching { authRepository.isLoggedIn.first() }.getOrDefault(false)
+        val withinWindow = runCatching { authRepository.isLoggedIn.first() }.getOrDefault(false)
+        val loggedIn = session != null || withinWindow
         if (!loggedIn) {
             UserSession.clear()
             _destination.value = SessionDestination.LOGGED_OUT
@@ -108,14 +109,31 @@ class SessionViewModel @Inject constructor(
             UserSession.setEmail(u.email)
         }
 
+        // If we are within the 7-day window but Supabase session is gone,
+        // restore from persisted state without requiring a network round-trip.
+        if (session == null && withinWindow) {
+            val storedCompany = UserSession.companyId
+            val storedRole = UserSession.role
+            if (storedCompany != null) {
+                if (storedRole == null) UserSession.setRole(UserRole.STAFF)
+                _destination.value = SessionDestination.LOGGED_IN
+            } else {
+                _destination.value = SessionDestination.NEEDS_COMPANY
+            }
+            return
+        }
+
         val companiesResult = runCatching { companyRepository.getMyCompanies() }
         if (companiesResult.isFailure) {
+            android.util.Log.e("SessionViewModel", "getMyCompanies failed", companiesResult.exceptionOrNull())
             _error.value = companiesResult.exceptionOrNull()?.message ?: "Failed to load companies"
             return
         }
         val companies = companiesResult.getOrNull() ?: emptyList()
         when {
-            companies.isEmpty() -> _destination.value = SessionDestination.NEEDS_COMPANY
+            companies.isEmpty() -> {
+                _destination.value = SessionDestination.NEEDS_COMPANY
+            }
             companies.size == 1 -> {
                 val c = companies.first()
                 val role = if (c.role == "owner") UserRole.ADMIN else UserRole.STAFF
@@ -123,7 +141,9 @@ class SessionViewModel @Inject constructor(
                 dataStore?.let { runCatching { UserSession.save(it) } }
                 _destination.value = SessionDestination.LOGGED_IN
             }
-            else -> _destination.value = SessionDestination.COMPANY_PICKER
+            else -> {
+                _destination.value = SessionDestination.COMPANY_PICKER
+            }
         }
     }
 

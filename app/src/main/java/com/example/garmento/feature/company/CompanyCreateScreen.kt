@@ -43,7 +43,7 @@ fun CompanyCreateScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Company") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

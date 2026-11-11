@@ -1,5 +1,7 @@
 package com.example.garmento.feature.reports
 
+import com.example.garmento.core.util.DateParsing
+
 import com.example.garmento.core.data.local.dao.CustomerDao
 import com.example.garmento.core.data.local.dao.OrderDao
 import com.example.garmento.core.data.local.dao.PlanDao
@@ -114,6 +116,22 @@ class ReportsRepository @Inject constructor(
         }
     }
 
+    suspend fun getDailySalesLast10Days(): List<Pair<String, Double>> {
+        val cid = activeCompanyId() ?: return emptyList()
+        val orders = orderDao.getAllOrdersWithCustomers(cid).first()  // Flow -> first
+        // Actually getAllOrdersWithCustomers returns Flow; .first() ok
+        val today = LocalDate.now()
+        val result = mutableListOf<Pair<String, Double>>()
+        for (i in 9 downTo 0) {
+            val date = today.minusDays(i.toLong())
+            val total = orders.filter { o ->
+                try { DateParsing.parseLocalDateTime(o.order_date).toLocalDate() == date } catch (_: Exception) { false }
+            }.sumOf { it.total_amount }
+            result.add(date.dayOfMonth.toString() to total)
+        }
+        return result
+    }
+
     private fun parseDate(value: String): LocalDate =
-        LocalDateTime.parse(value).toLocalDate()
+        DateParsing.parseLocalDateTime(value).toLocalDate()
 }

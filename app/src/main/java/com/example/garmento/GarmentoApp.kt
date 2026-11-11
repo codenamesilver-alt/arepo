@@ -11,7 +11,10 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.garmento.core.sync.SyncWorker
+import com.example.garmento.feature.expenses.ExpensesStore
+import com.example.garmento.feature.items.ItemStore
 import com.example.garmento.feature.reminders.ReminderWorker
+import com.example.garmento.feature.services.ServicesStore
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -29,6 +32,9 @@ class GarmentoApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        ServicesStore.init(this)
+        ItemStore.init(this)
+        ExpensesStore.init(this)
         createNotificationChannel()
         scheduleReminderWorker()
         scheduleSyncWorker()

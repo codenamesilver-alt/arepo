@@ -21,7 +21,7 @@ interface AuthRepository {
     val storedRole: Flow<String?>
     fun currentSession(): SupabaseSession?
     suspend fun signInWithGoogle(): Boolean
-    suspend fun signInWithGoogleIdToken(idToken: String): Boolean
+    suspend fun signInWithGoogleIdToken(idToken: String): Result<Unit>
     suspend fun signOut()
 }
 
@@ -70,25 +70,35 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun signInWithGoogleIdToken(idToken: String): Boolean {
+    override suspend fun signInWithGoogleIdToken(idToken: String): Result<Unit> {
+        if (idToken.isBlank()) {
+            android.util.Log.e("AuthRepository", "signInWithGoogleIdToken called with blank idToken")
+            return Result.failure(IllegalArgumentException("Missing Google ID token"))
+        }
         return try {
             supabase.auth.signInWith(IDToken) {
                 this.idToken = idToken
                 provider = Google
             }
-            val user = supabase.auth.currentUserOrNull()
-            UserSession.setUserId(user?.id)
-            UserSession.setEmail(user?.email)
+            val session = supabase.auth.currentSessionOrNull()
+            val user = session?.user ?: supabase.auth.currentUserOrNull()
+            if (user == null) {
+                android.util.Log.e("AuthRepository", "signInWithGoogleIdToken: no user session after sign-in")
+                return Result.failure(IllegalStateException("No user session returned by Supabase"))
+            }
+            UserSession.setUserId(user.id)
+            UserSession.setEmail(user.email)
             UserSession.save(dataStore)
             dataStore.edit { prefs ->
                 prefs[Constants.SESSION_KEY] = true
                 prefs[Constants.LOGIN_TIME_KEY] = System.currentTimeMillis()
-                user?.id?.let { prefs[Constants.USER_ID_KEY] = it }
-                user?.email?.let { prefs[Constants.EMAIL_KEY] = it }
+                user.id.let { prefs[Constants.USER_ID_KEY] = it }
+                user.email?.let { prefs[Constants.EMAIL_KEY] = it }
             }
-            true
+            Result.success(Unit)
         } catch (e: Exception) {
-            false
+            android.util.Log.e("AuthRepository", "signInWithGoogleIdToken failed", e)
+            Result.failure(e)
         }
     }
 

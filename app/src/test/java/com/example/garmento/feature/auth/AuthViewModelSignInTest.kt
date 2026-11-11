@@ -20,6 +20,8 @@ class AuthViewModelSignInTest {
         override val storedRole = MutableStateFlow<String?>(null)
         override fun currentSession() = null
         override suspend fun signInWithGoogle(): Boolean = result
+        override suspend fun signInWithGoogleIdToken(idToken: String): Result<Unit> =
+            if (result) Result.success(Unit) else Result.failure(IllegalStateException("sign-in failed"))
         override suspend fun signOut() {}
     }
 

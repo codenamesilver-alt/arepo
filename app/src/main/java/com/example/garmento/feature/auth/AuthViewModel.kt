@@ -51,15 +51,21 @@ class AuthViewModel @Inject constructor(
     fun signInWithGoogleIdToken(idToken: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val success = authRepository.signInWithGoogleIdToken(idToken)
-            if (success) {
+            val result = authRepository.signInWithGoogleIdToken(idToken)
+            if (result.isSuccess) {
                 _uiState.value = _uiState.value.copy(isLoading = false, loginSuccess = true)
             } else {
+                val cause = result.exceptionOrNull()
+                android.util.Log.e("AuthViewModel", "Google ID token sign-in failed", cause)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = "Sign-in failed"
+                    errorMessage = cause?.message ?: "Sign-in failed"
                 )
             }
         }
+    }
+
+    fun reportSignInError(message: String) {
+        _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = message)
     }
 }

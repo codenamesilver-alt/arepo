@@ -18,6 +18,7 @@ data class TeamUiState(
     val error: String? = null,
     val successMessage: String? = null,
     val inviteEmail: String = "",
+    val invitedEmail: String = "",
     val inviteRole: UserRole = UserRole.STAFF,
     val inviteToken: String? = null,
     val isOwner: Boolean = UserSession.role == UserRole.ADMIN
@@ -76,6 +77,7 @@ class TeamViewModel @Inject constructor(
                         isLoading = false,
                         successMessage = "Invitation created",
                         inviteToken = token,
+                        invitedEmail = email,
                         inviteEmail = ""
                     )
                 }
@@ -121,7 +123,7 @@ class TeamViewModel @Inject constructor(
     }
 
     fun clearInviteToken() {
-        _uiState.update { it.copy(inviteToken = null) }
+        _uiState.update { it.copy(inviteToken = null, invitedEmail = "") }
     }
 
     fun clearMessages() {

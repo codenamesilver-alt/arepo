@@ -33,30 +33,37 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.garmento.core.domain.model.SubscriptionPlan
+import com.example.garmento.core.util.UserSession
+import com.example.garmento.feature.dashboard.MainBottomBar
+import com.example.garmento.feature.dashboard.MainTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlansListScreen(
     onNavigateToEdit: (String) -> Unit,
     onNavigateToCreate: () -> Unit,
+    onNavigateToTab: (MainTab) -> Unit = {},
     viewModel: PlansViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val plans by viewModel.observePlans().collectAsStateWithLifecycle()
+    val isAdmin = UserSession.isAdmin
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Subscription Plans") },
+                title = { },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToCreate) {
-                Icon(Icons.Default.Add, contentDescription = "Add Plan")
+            if (isAdmin) {
+                FloatingActionButton(onClick = onNavigateToCreate) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Plan")
+                }
             }
         }
     ) { padding ->
@@ -79,7 +86,8 @@ fun PlansListScreen(
                     Text("No plans yet", style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Tap + to create your first plan",
+                        if (isAdmin) "Tap + to create your first plan"
+                        else "Contact the admin to add plans",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -97,7 +105,12 @@ fun PlansListScreen(
                     items(plans, key = { it.id }) { plan ->
                         PlanCard(
                             plan = plan,
-                            onClick = { onNavigateToEdit(plan.id.toString()) },
+                            isAdmin = isAdmin,
+                            onClick = if (isAdmin) {
+                                { onNavigateToEdit(plan.id.toString()) }
+                            } else {
+                                {}
+                            },
                             onToggleActive = { viewModel.toggleActive(plan.id) }
                         )
                     }
@@ -111,6 +124,7 @@ fun PlansListScreen(
 @Composable
 private fun PlanCard(
     plan: SubscriptionPlan,
+    isAdmin: Boolean,
     onClick: () -> Unit,
     onToggleActive: () -> Unit
 ) {
@@ -140,10 +154,12 @@ private fun PlanCard(
                         MaterialTheme.colorScheme.onSurfaceVariant
                     }
                 )
-                Switch(
-                    checked = plan.isActive,
-                    onCheckedChange = { onToggleActive() }
-                )
+                if (isAdmin) {
+                    Switch(
+                        checked = plan.isActive,
+                        onCheckedChange = { onToggleActive() }
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(

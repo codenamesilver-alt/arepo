@@ -5,13 +5,21 @@ sealed class Screen(val route: String) {
     data object Session : Screen("session")
     data object Login : Screen("login")
     data object Dashboard : Screen("dashboard")
+    data object DeliveriesForDate : Screen("deliveries_for_date/{date}") {
+        fun createRoute(date: String): String = "deliveries_for_date/$date"
+    }
     data object PlacedOrders : Screen("placed_orders")
     data object PlansList : Screen("plans")
+    data object Subscription : Screen("subscription")
     data object PlanEdit : Screen("plan_edit?planId={planId}") {
         fun createRoute(planId: String? = null): String =
             if (planId != null) "plan_edit?planId=$planId" else "plan_edit"
     }
     data object NewCustomer : Screen("new_customer")
+    data object AddCustomer : Screen("add_customer")
+    data object Services : Screen("services")
+    data object Item : Screen("item")
+    data object Expenses : Screen("expenses")
     data object CustomerEdit : Screen("customer_edit/{customerId}") {
         fun createRoute(customerId: String): String = "customer_edit/$customerId"
     }
@@ -31,6 +39,7 @@ sealed class Screen(val route: String) {
             return if (params.isEmpty()) "orders" else "orders?${params.joinToString("&")}"
         }
     }
+    data object OrderHistory : Screen("order_history")
     data object OrderEdit : Screen("order_edit/{orderId}") {
         fun createRoute(orderId: String): String = "order_edit/$orderId"
     }

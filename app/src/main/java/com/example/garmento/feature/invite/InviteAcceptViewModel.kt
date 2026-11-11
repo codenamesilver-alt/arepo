@@ -38,16 +38,15 @@ class InviteAcceptViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(InviteAcceptUiState())
     val uiState: StateFlow<InviteAcceptUiState> = _uiState.asStateFlow()
 
+    fun hasSession(): Boolean = authRepository?.currentSession() != null
+
     fun accept(token: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, success = false) }
             try {
                 if (authRepository?.currentSession() == null) {
-                    val signedIn = authRepository?.signInWithGoogle() ?: false
-                    if (!signedIn) {
-                        _uiState.update { it.copy(isLoading = false, error = "Please sign in to accept this invitation.") }
-                        return@launch
-                    }
+                    _uiState.update { it.copy(isLoading = false, error = "Please sign in with Google first.") }
+                    return@launch
                 }
                 val before = companyRepository.getMyCompanies().map { it.id }.toSet()
                 val result = supabase.postgrest.rpc(
@@ -84,6 +83,41 @@ class InviteAcceptViewModel @Inject constructor(
             raw.contains("email does not match") -> "This invitation is for a different email address."
             raw.contains("not authenticated") -> "Please sign in to accept this invitation."
             else -> e.message ?: "Failed to accept invitation"
+        }
+    }
+
+    fun acceptWithIdToken(token: String, idToken: String, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null, success = false) }
+            try {
+                val result = authRepository?.signInWithGoogleIdToken(idToken)
+                if (result?.isFailure == true) {
+                    _uiState.update { it.copy(isLoading = false, error = result.exceptionOrNull()?.message ?: "Sign-in failed") }
+                    return@launch
+                }
+                val before = companyRepository.getMyCompanies().map { it.id }.toSet()
+                val rpcResult = supabase.postgrest.rpc(
+                    function = "accept_invitation",
+                    parameters = JsonObject(mapOf("p_token" to JsonPrimitive(token)))
+                )
+                val returnedId = runCatching { rpcResult.decodeAs<String>() }.getOrNull()
+                val after = companyRepository.getMyCompanies()
+                val joined = after.firstOrNull { it.id == returnedId }
+                    ?: after.firstOrNull { it.id !in before }
+                    ?: after.firstOrNull { it.id == returnedId?.trim('"') }
+                if (joined != null) {
+                    val role = if (joined.role == "owner") UserRole.ADMIN else UserRole.STAFF
+                    UserSession.setCompany(joined.id, role)
+                    dataStore?.let { UserSession.save(it) }
+                }
+                _uiState.update {
+                    it.copy(isLoading = false, success = true, companyName = joined?.name)
+                }
+                onSuccess()
+            } catch (e: Exception) {
+                val msg = mapError(e)
+                _uiState.update { it.copy(isLoading = false, error = msg) }
+            }
         }
     }
 

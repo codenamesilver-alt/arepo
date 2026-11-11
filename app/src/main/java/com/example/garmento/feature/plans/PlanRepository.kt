@@ -1,5 +1,7 @@
 package com.example.garmento.feature.plans
 
+import com.example.garmento.core.util.DateParsing
+
 import com.example.garmento.core.data.local.dao.PlanDao
 import com.example.garmento.core.data.local.dao.PendingSyncDao
 import com.example.garmento.core.data.local.entity.PlanEntity
@@ -80,6 +82,19 @@ class PlanRepository @Inject constructor(
         }
     }
 
+    suspend fun deletePlan(planId: String) {
+        val cid = activeCompanyId() ?: return
+        val entity = planDao.getPlanById(planId, cid) ?: return
+        planDao.deletePlan(entity)
+        try {
+            supabase.from("subscription_plans").delete {
+                filter { eq("id", planId) }
+            }
+        } catch (_: Exception) {
+            // Offline
+        }
+    }
+
     suspend fun toggleActive(planId: String) {
         val cid = activeCompanyId() ?: return
         val plan = planDao.getPlanById(planId, cid) ?: return
@@ -137,7 +152,7 @@ class PlanRepository @Inject constructor(
         amount = amount,
         totalClothes = total_clothes,
         isActive = is_active,
-        createdAt = LocalDateTime.parse(created_at)
+        createdAt = DateParsing.parseLocalDateTime(created_at)
     )
 
     private fun SubscriptionPlan.toEntity(cid: String) = PlanEntity(

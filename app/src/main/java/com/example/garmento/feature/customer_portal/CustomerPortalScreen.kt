@@ -38,7 +38,7 @@ fun CustomerPortalScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("My Subscription") })
+            TopAppBar(title = { })
         }
     ) { padding ->
         when {

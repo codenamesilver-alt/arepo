@@ -45,7 +45,7 @@ fun RemindersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Expiry Reminders") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

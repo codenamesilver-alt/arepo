@@ -1,5 +1,7 @@
 package com.example.garmento.feature.customers
 
+import com.example.garmento.core.util.DateParsing
+
 import com.example.garmento.core.data.local.dao.SubscriptionDao
 import com.example.garmento.core.data.local.dao.TransactionDao
 import com.example.garmento.core.data.local.entity.SubscriptionEntity
@@ -162,6 +164,46 @@ class SubscriptionRepository @Inject constructor(
         } catch (_: Exception) { }
     }
 
+    suspend fun revokeSubscription(customerId: String) {
+        val cid = activeCompanyId() ?: return
+        val active = subscriptionDao.getActiveSubscriptionForCustomer(customerId, cid) ?: return
+        subscriptionDao.deleteSubscription(active.id, cid)
+        try {
+            supabase.from("subscriptions").delete {
+                filter { eq("id", active.id) }
+            }
+        } catch (_: Exception) {
+            // Offline
+        }
+    }
+
+    suspend fun syncFromRemote() {
+        val cid = activeCompanyId() ?: return
+        try {
+            val remote = supabase.from("subscriptions")
+                .select()
+                .decodeList<SupabaseSubscription>()
+            remote.forEach { s ->
+                val entity = SubscriptionEntity(
+                    id = s.id,
+                    companyId = s.company_id ?: cid,
+                    customer_id = s.customer_id,
+                    plan_id = s.plan_id,
+                    start_date = s.start_date,
+                    end_date = s.end_date,
+                    clothes_quota = s.clothes_quota,
+                    clothes_used = s.clothes_used,
+                    status = s.status,
+                    renewed_from_id = s.renewed_from_id,
+                    created_at = s.created_at
+                )
+                subscriptionDao.insertSubscription(entity)
+            }
+        } catch (_: Exception) {
+            // Offline
+        }
+    }
+
     suspend fun updateSubscriptionFields(subscription: Subscription) {
         val cid = activeCompanyId()
         subscriptionDao.updateSubscription(subscription.toEntity(cid))
@@ -187,13 +229,13 @@ class SubscriptionRepository @Inject constructor(
         id = UUID.fromString(id),
         customerId = UUID.fromString(customer_id),
         planId = UUID.fromString(plan_id),
-        startDate = LocalDate.parse(start_date),
-        endDate = LocalDate.parse(end_date),
+        startDate = DateParsing.parseLocalDate(start_date),
+        endDate = DateParsing.parseLocalDate(end_date),
         clothesQuota = clothes_quota,
         clothesUsed = clothes_used,
         status = SubscriptionStatus.fromValue(status),
         renewedFromId = renewed_from_id?.let { UUID.fromString(it) },
-        createdAt = LocalDateTime.parse(created_at)
+        createdAt = DateParsing.parseLocalDateTime(created_at)
     )
 
     private fun Subscription.toEntity(cid: String?) = SubscriptionEntity(

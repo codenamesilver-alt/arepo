@@ -1,5 +1,7 @@
 package com.example.garmento.feature.dashboard
 
+import com.example.garmento.core.util.DateParsing
+
 import com.example.garmento.core.data.local.dao.CustomerDao
 import com.example.garmento.core.data.local.dao.OrderDao
 import com.example.garmento.core.data.local.dao.SubscriptionDao
@@ -39,6 +41,18 @@ data class UpcomingDeliveryRow(
     val deliveryDate: String,
     val deliveryStatus: DeliveryStatus,
     val clothesCount: Int
+)
+
+data class DeliveryDetailRow(
+    val orderId: String,
+    val orderNumber: String,
+    val customerName: String,
+    val customerPhone: String,
+    val totalItems: Int,
+    val itemsJson: String?,
+    val deliveryDate: String,
+    val totalAmount: Double = 0.0,
+    val paidAmount: Double = 0.0
 )
 
 @Serializable
@@ -189,6 +203,40 @@ class DashboardRepository @Inject constructor(
         }
     }
 
+    fun getDeliveriesForDate(date: String): Flow<List<UpcomingDeliveryRow>> {
+        val cid = activeCompanyId() ?: return flowOf(emptyList())
+        return orderDao.getDeliveriesForDate(date = date, companyId = cid).map { rows ->
+            rows.map {
+                UpcomingDeliveryRow(
+                    customerName = it.customer_name,
+                    orderNumber = it.order_number,
+                    deliveryDate = it.delivery_date ?: "",
+                    deliveryStatus = DeliveryStatus.fromValue(it.delivery_status),
+                    clothesCount = it.clothes_count
+                )
+            }
+        }
+    }
+
+    fun getDeliveriesForDateFull(date: String): Flow<List<DeliveryDetailRow>> {
+        val cid = activeCompanyId() ?: return flowOf(emptyList())
+        return orderDao.getDeliveriesForDate(date = date, companyId = cid).map { rows ->
+            rows.map {
+                DeliveryDetailRow(
+                    orderId = it.id,
+                    orderNumber = it.order_number,
+                    customerName = it.customer_name,
+                    customerPhone = it.customer_phone,
+                    totalItems = it.clothes_count,
+                    itemsJson = it.items_json,
+                    deliveryDate = it.delivery_date ?: "",
+                    totalAmount = it.total_amount,
+                    paidAmount = it.paid_amount
+                )
+            }
+        }
+    }
+
     fun getRecentOrders(limit: Int = 5): Flow<List<OrderEntity>> {
         val cid = activeCompanyId() ?: return flowOf(emptyList())
         return orderDao.getRecentOrders(limit, cid)
@@ -276,13 +324,13 @@ class DashboardRepository @Inject constructor(
         id = UUID.fromString(id),
         customerId = UUID.fromString(customer_id),
         planId = UUID.fromString(plan_id),
-        startDate = LocalDate.parse(start_date),
-        endDate = LocalDate.parse(end_date),
+        startDate = DateParsing.parseLocalDate(start_date),
+        endDate = DateParsing.parseLocalDate(end_date),
         clothesQuota = clothes_quota,
         clothesUsed = clothes_used,
         status = SubscriptionStatus.fromValue(status),
         renewedFromId = renewed_from_id?.let { UUID.fromString(it) },
-        createdAt = LocalDateTime.parse(created_at)
+        createdAt = DateParsing.parseLocalDateTime(created_at)
     )
 
     private fun TransactionEntity.toDomain() = Transaction(
@@ -292,6 +340,6 @@ class DashboardRepository @Inject constructor(
         amount = amount,
         type = TransactionType.fromValue(type),
         paymentMethod = payment_method,
-        transactionDate = LocalDateTime.parse(transaction_date)
+        transactionDate = DateParsing.parseLocalDateTime(transaction_date)
     )
 }

@@ -24,7 +24,7 @@ object Constants {
 
     const val PORTAL_BASE_URL = "https://kfxldnebbqkwkzsxirny.supabase.co/customer/"
 
-    const val OVERAGE_RATE_PER_ITEM = 12.5
+    const val OVERAGE_RATE_PER_ITEM = 15.0
 
     const val SESSION_DURATION_MS = 7L * 24 * 60 * 60 * 1000
 

@@ -43,7 +43,7 @@ fun NewSubscriptionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("New Subscription") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -60,6 +60,30 @@ fun NewSubscriptionScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("Select Plan", style = MaterialTheme.typography.titleMedium)
+
+            if (uiState.willRenew) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            "Active subscription will be renewed",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Text(
+                            "Renewal starts fresh from today for the plan duration. " +
+                                "Remaining days from the current subscription (ends " +
+                                "${uiState.activeSubscriptionEnd ?: "—"}) are NOT carried over.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
+            }
 
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))

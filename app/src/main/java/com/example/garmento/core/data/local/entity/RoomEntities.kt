@@ -46,18 +46,24 @@ data class SubscriptionEntity(
 data class OrderEntity(
     @PrimaryKey val id: String,
     val companyId: String = "",
-    val subscription_id: String,
+    val subscription_id: String? = null,
+    val customer_id: String? = null,
+    val is_subscription: Boolean = true,
     val order_number: String,
     val clothes_count: Int,
-    val clothes_from_quota: Int,
-    val clothes_overage: Int,
+    val clothes_from_quota: Int = 0,
+    val clothes_overage: Int = 0,
+    val items_json: String? = null,
+    val total_amount: Double = 0.0,
     val order_date: String,
-    val is_voided: Boolean,
-    val void_reason: String?,
-    val grace_period: Boolean,
+    val is_voided: Boolean = false,
+    val void_reason: String? = null,
+    val grace_period: Boolean = false,
     val delivery_date: String?,
-    val delivery_status: String,
-    val delivery_notes: String?
+    val delivery_status: String = "pending",
+    val delivery_notes: String? = null,
+    val paid_amount: Double = 0.0,
+    val payment_status: String = "pending"
 )
 
 @Entity(tableName = "transactions")
@@ -65,7 +71,7 @@ data class TransactionEntity(
     @PrimaryKey val id: String,
     val companyId: String = "",
     val customer_id: String,
-    val subscription_id: String,
+    val subscription_id: String?,
     val amount: Double,
     val type: String,
     val payment_method: String,

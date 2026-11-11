@@ -26,7 +26,7 @@ import com.example.garmento.core.data.local.entity.TransactionEntity
         TransactionEntity::class,
         PendingSyncEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = true
 )
 abstract class GarmentoDatabase : RoomDatabase() {

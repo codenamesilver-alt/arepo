@@ -73,6 +73,14 @@ class PlansViewModel @Inject constructor(
         }
     }
 
+    fun deletePlan(planId: String) {
+        viewModelScope.launch {
+            try {
+                planRepository.deletePlan(planId)
+            } catch (_: Exception) { }
+        }
+    }
+
     fun loadPlanForEdit(planId: String) {
         viewModelScope.launch {
             val plan = planRepository.getPlanById(planId) ?: return@launch

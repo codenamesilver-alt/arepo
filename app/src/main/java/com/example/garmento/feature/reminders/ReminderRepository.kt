@@ -1,5 +1,7 @@
 package com.example.garmento.feature.reminders
 
+import com.example.garmento.core.util.DateParsing
+
 import com.example.garmento.core.data.local.dao.SubscriptionDao
 import com.example.garmento.core.domain.model.Subscription
 import com.example.garmento.core.domain.model.SubscriptionStatus
@@ -36,7 +38,7 @@ class ReminderRepository @Inject constructor(
         val cid = activeCompanyId() ?: return emptyList()
         val allActive = subscriptionDao.getAllActiveSubscriptions(cid)
         return allActive.filter { entity ->
-            val endDate = LocalDate.parse(entity.end_date)
+            val endDate = DateParsing.parseLocalDate(entity.end_date)
             val daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), endDate)
             daysLeft in 0..days.toLong()
         }.map { it.toDomain() }
@@ -57,12 +59,12 @@ class ReminderRepository @Inject constructor(
             id = UUID.fromString(id),
             customerId = UUID.fromString(customer_id),
             planId = UUID.fromString(plan_id),
-            startDate = LocalDate.parse(start_date),
-            endDate = LocalDate.parse(end_date),
+            startDate = DateParsing.parseLocalDate(start_date),
+            endDate = DateParsing.parseLocalDate(end_date),
             clothesQuota = clothes_quota,
             clothesUsed = clothes_used,
             status = SubscriptionStatus.fromValue(status),
             renewedFromId = renewed_from_id?.let { UUID.fromString(it) },
-            createdAt = LocalDateTime.parse(created_at)
+            createdAt = DateParsing.parseLocalDateTime(created_at)
         )
 }

@@ -1,5 +1,7 @@
 package com.example.garmento.feature.customers
 
+import com.example.garmento.core.util.DateParsing
+
 import com.example.garmento.core.data.local.dao.CustomerDao
 import com.example.garmento.core.data.local.dao.SubscriptionDao
 import com.example.garmento.core.data.local.entity.CustomerEntity
@@ -87,6 +89,19 @@ class CustomerRepository @Inject constructor(
         }
     }
 
+    suspend fun deleteCustomer(id: String) {
+        val cid = activeCompanyId() ?: return
+        val entity = customerDao.getCustomerById(id, cid) ?: return
+        customerDao.deleteCustomer(entity)
+        try {
+            supabase.from("customers").delete {
+                filter { eq("id", id) }
+            }
+        } catch (_: Exception) {
+            // Offline
+        }
+    }
+
     suspend fun getActiveSubscription(customerId: String): Subscription? {
         val cid = activeCompanyId() ?: return null
         return subscriptionDao.getActiveSubscriptionForCustomer(customerId, cid)?.toDomain()
@@ -135,7 +150,7 @@ class CustomerRepository @Inject constructor(
         address = address,
         notes = notes,
         publicCode = public_code,
-        createdAt = LocalDateTime.parse(created_at)
+        createdAt = DateParsing.parseLocalDateTime(created_at)
     )
 
     private fun Customer.toEntity(cid: String) = CustomerEntity(
@@ -164,12 +179,12 @@ class CustomerRepository @Inject constructor(
         id = UUID.fromString(id),
         customerId = UUID.fromString(customer_id),
         planId = UUID.fromString(plan_id),
-        startDate = LocalDate.parse(start_date),
-        endDate = LocalDate.parse(end_date),
+        startDate = DateParsing.parseLocalDate(start_date),
+        endDate = DateParsing.parseLocalDate(end_date),
         clothesQuota = clothes_quota,
         clothesUsed = clothes_used,
         status = SubscriptionStatus.fromValue(status),
         renewedFromId = renewed_from_id?.let { UUID.fromString(it) },
-        createdAt = LocalDateTime.parse(created_at)
+        createdAt = DateParsing.parseLocalDateTime(created_at)
     )
 }

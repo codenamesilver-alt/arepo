@@ -15,14 +15,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.garmento.core.domain.model.Subscription
 
 @Composable
 fun ExpiringSoonSection(
-    subscriptions: List<Subscription>,
+    subscriptions: List<ExpiringSoonRow>,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -52,11 +53,11 @@ fun ExpiringSoonSection(
                     ) {
                         Column {
                             Text(
-                                "Subscription ${sub.id.toString().take(8)}",
+                                sub.customerName,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                "${sub.daysRemaining} days left · ${sub.remainingClothes} clothes",
+                                "${sub.daysLeft} days left · ${sub.clothesLeft} clothes left",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                             )

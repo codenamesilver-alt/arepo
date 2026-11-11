@@ -19,6 +19,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +45,7 @@ import com.google.android.gms.common.api.ApiException
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+    onNavigateToInvite: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -59,10 +61,12 @@ fun LoginScreen(
             if (idToken != null) {
                 viewModel.signInWithGoogleIdToken(idToken)
             } else {
-                viewModel.signInWithGoogleIdToken("")
+                android.util.Log.e("LoginScreen", "Google Sign-In returned no idToken (web client id mismatch?)")
+                viewModel.reportSignInError("Google Sign-In did not return an ID token. Check OAuth client registration.")
             }
         } catch (e: ApiException) {
-            viewModel.signInWithGoogleIdToken("")
+            android.util.Log.e("LoginScreen", "GoogleSignIn ApiException status=${e.statusCode} message=${e.message}", e)
+            viewModel.reportSignInError("Google Sign-In failed (${e.statusCode}): ${e.message}")
         }
     }
 
@@ -126,7 +130,10 @@ fun LoginScreen(
                                     .requestEmail()
                                     .build()
                                 val client = GoogleSignIn.getClient(context, gso)
-                                launcher.launch(client.signInIntent)
+                                // Force the account picker to show (clear cached selection)
+                                client.signOut().addOnCompleteListener {
+                                    launcher.launch(client.signInIntent)
+                                }
                             },
                             enabled = !uiState.isLoading,
                             colors = ButtonDefaults.buttonColors(
@@ -161,6 +168,11 @@ fun LoginScreen(
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        TextButton(onClick = onNavigateToInvite) {
+                            Text("Have an invitation? Enter token")
                         }
                     }
                 }

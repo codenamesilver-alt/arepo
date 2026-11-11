@@ -54,7 +54,7 @@ fun PlanEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (planId != null) "Edit Plan" else "New Plan") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = {
                         viewModel.resetEditState()

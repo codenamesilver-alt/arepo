@@ -60,15 +60,28 @@ fun TeamScreen(
     LaunchedEffect(uiState.inviteToken) {
         val token = uiState.inviteToken
         if (token != null) {
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
+            val email = uiState.invitedEmail.ifBlank { uiState.inviteEmail }
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = android.net.Uri.parse("mailto:")
+                putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
                 putExtra(Intent.EXTRA_SUBJECT, "Garmento team invitation")
                 putExtra(
                     Intent.EXTRA_TEXT,
-                    "You have been invited to join a Garmento team. Use this token to accept: $token"
+                    "You have been invited to join a Garmento team.\n\n" +
+                        "Open the Garmento app, go to Accept Invitation, and enter this token:\n\n$token\n\n" +
+                        "This invitation expires in 7 days."
                 )
             }
-            context.startActivity(Intent.createChooser(intent, "Send invitation"))
+            try {
+                context.startActivity(Intent.createChooser(intent, "Send invitation email"))
+            } catch (_: Exception) {
+                // Fallback to generic share if no email app
+                val share = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "Garmento invitation token: $token")
+                }
+                context.startActivity(Intent.createChooser(share, "Share invitation"))
+            }
             viewModel.clearInviteToken()
         }
     }
@@ -76,7 +89,7 @@ fun TeamScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Team Management") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
