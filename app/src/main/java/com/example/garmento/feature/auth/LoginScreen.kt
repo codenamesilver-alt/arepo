@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.garmento.R
 import com.example.garmento.core.util.Constants
 import com.example.garmento.ui.components.BrandSubcaption
+import com.example.garmento.ui.components.GlassBackground
 import com.example.garmento.ui.components.WovenBackground
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -77,7 +78,7 @@ fun LoginScreen(
     }
 
     Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { padding ->
-        WovenBackground(
+        GlassBackground(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -185,5 +186,5 @@ fun LoginScreen(
                 )
             }
         }
+        }
     }
-}

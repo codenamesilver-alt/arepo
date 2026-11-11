@@ -32,6 +32,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.garmento.ui.components.FocusedPillowButton
+import com.example.garmento.ui.components.GlassBackground
+import com.example.garmento.ui.components.GlassCard
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -67,11 +69,8 @@ fun DashboardScreen(
         initialSelectedDateMillis = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        GlassBackground(modifier = Modifier.fillMaxSize())
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,28 +80,20 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.Top
         ) {
             // Pillow (pill) button with DASHBOARD written on top.
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = Color.White,
-                        shape = RoundedCornerShape(50)
-                    )
-                    .border(
-                        width = 2.dp,
+            GlassCard(cornerRadius = 50.dp) {
+                Box(
+                    modifier = Modifier.padding(horizontal = 40.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "DASHBOARD",
                         color = Gold,
-                        shape = RoundedCornerShape(50)
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 2.sp
                     )
-                    .padding(horizontal = 40.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "DASHBOARD",
-                    color = Gold,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    letterSpacing = 2.sp
-                )
+                }
             }
 
             // 2x2 grid of pillow buttons just below.

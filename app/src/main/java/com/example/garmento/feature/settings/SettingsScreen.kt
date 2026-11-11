@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -38,11 +39,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.garmento.core.util.UserSession
 import com.example.garmento.feature.orders.OrderLookupViewModel
+import com.example.garmento.ui.components.GlassBackground
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,13 +55,18 @@ fun SettingsScreen(
     onNavigateToStaff: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
-    orderLookupVm: OrderLookupViewModel = hiltViewModel()
+    orderLookupVm: OrderLookupViewModel = hiltViewModel(),
+    expiringVm: ExpiringSubscriptionsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lookupState by orderLookupVm.uiState.collectAsStateWithLifecycle()
+    val expiring by expiringVm.items.collectAsStateWithLifecycle()
     val isAdmin = UserSession.isAdmin
 
+    LaunchedEffect(Unit) { expiringVm.refresh() }
+
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { },
@@ -68,20 +76,21 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    titleContentColor = androidx.compose.ui.graphics.Color.White
                 )
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        GlassBackground(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // Username
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -282,6 +291,45 @@ fun SettingsScreen(
                 }
             }
 
+            if (isAdmin) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Expiring in 3 Days", style = MaterialTheme.typography.titleSmall)
+                        if (expiring.isEmpty()) {
+                            Text("No subscriptions expiring soon.", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            expiring.forEach { sub ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("${sub.customerName} — ${sub.planName}", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                        Text("Ends: ${sub.endDate}", style = MaterialTheme.typography.bodySmall)
+                                        Text("Mobile: ${sub.customerPhone}", style = MaterialTheme.typography.bodySmall)
+                                        val ctx = LocalContext.current
+                                        Button(onClick = {
+                                            val msg = "Hi ${sub.customerName}, your ${sub.planName} subscription ends on ${sub.endDate}. Please renew to continue laundry service."
+                                            val phone = sub.customerPhone.replace(Regex("[^0-9]"), "")
+                                            val uri = android.net.Uri.parse("https://wa.me/$phone?text=${android.net.Uri.encode(msg)}")
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                                            try { ctx.startActivity(intent) } catch (_: Exception) { }
+                                        }) {
+                                            Text("Send WhatsApp")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
             // Logout
@@ -294,6 +342,7 @@ fun SettingsScreen(
             ) {
                 Text("Logout")
             }
+        }
         }
     }
 }

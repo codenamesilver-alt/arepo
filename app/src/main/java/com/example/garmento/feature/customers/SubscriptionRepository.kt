@@ -164,6 +164,22 @@ class SubscriptionRepository @Inject constructor(
         } catch (_: Exception) { }
     }
 
+    suspend fun getExpiringWithinDays(days: Int): List<SubscriptionEntity> {
+        val cid = activeCompanyId() ?: return emptyList()
+        val today = java.time.LocalDate.now()
+        val cutoff = today.plusDays(days.toLong()).toString()
+        return try {
+            subscriptionDao.getExpiringSubscriptions(cutoff, cid).filter { s ->
+                try {
+                    val end = java.time.LocalDate.parse(s.end_date)
+                    !end.isBefore(today) && !end.isAfter(today.plusDays(days.toLong()))
+                } catch (_: Exception) { false }
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun revokeSubscription(customerId: String) {
         val cid = activeCompanyId() ?: return
         val active = subscriptionDao.getActiveSubscriptionForCustomer(customerId, cid) ?: return
